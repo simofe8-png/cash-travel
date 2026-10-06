@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 27: Security & privacy hardening.
+`docs/MASTER_BUILD_PLAN.md` — Step 28: Migration & data-integrity hardening.
 
 ## Last completed build step
-Step 26 — Offline & lifecycle hardening — PASS.
+Step 27 — Security & privacy hardening — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -147,3 +147,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Fixed: background rate refresh never retried after an offline failure → useRateRefresh now also retries on app foreground (single-flight).
 - Added src/application/offline.test.ts: full workflow (trip, cash/card expense, FX, ATM, reconcile) with a failing network provider; honest unavailable reporting; restart on a reopened file DB (process death) with identical state; back online → rates + derived card estimate fill in while transactions/ledger/card_charges stay byte-identical; cached rates work offline again; timezone change mid-trip keeps day grouping, "today" follows device offset.
 - Evidence: `npm run verify` → 324/324. Physical A54 in airplane mode with Wi-Fi off (ping: network unreachable; DNS fails): cold start, expense saved via UI, USD wallet −$70 with banner, totals from cached rates; connectivity then restored (airplane off, Wi-Fi on, ping OK).
+
+### Step 27 — Security & privacy hardening — PASS (2026-10-06)
+- Review: docs/security/REVIEW-2026-10-06.md (12 areas). Fixed: Android Auto Backup disabled (allowBackup=false); unused VIBRATE permission blocked. Accepted with rationale: exported launcher activity + prefill-only deep links; moderate decode-uri-component DoS (fix only in next SDK); no FLAG_SECURE.
+- Evidence: introspected manifest → permissions INTERNET, USE_BIOMETRIC, USE_FINGERPRINT; allowBackup=false. Greps: no http://, secrets, eval; console only one error-message warn; SQL fully parameterized. `npm run verify` → 324/324.
+- Follow-up: verify the final merged manifest (library manifests incl. CAMERA) on the RC build (Step 32).

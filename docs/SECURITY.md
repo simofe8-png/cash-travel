@@ -26,3 +26,9 @@ Never casually log complete financial histories, sensitive card-related data, pr
 
 ## Review areas
 Review against relevant mobile security practices: local data exposure, backup/export behavior, file permissions, temporary files, intent/deep-link handling, dependency risk, exported components, secrets/configuration, receipt lifecycle, PDF lifecycle.
+
+## Implementation status (V1)
+See `docs/security/REVIEW-2026-10-06.md` for the full review. Key settings: `android.allowBackup=false`; only
+`INTERNET`, `USE_BIOMETRIC`, `USE_FINGERPRINT` declared (camera requested at runtime for receipts); storage, media,
+location, audio and overlay permissions blocked; HTTPS-only keyless FX providers; app-private DB/receipts; report
+PDFs cleaned up; no sensitive logging; accepted risks documented in the review.
