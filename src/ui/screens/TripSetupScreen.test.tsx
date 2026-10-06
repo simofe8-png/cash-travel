@@ -33,7 +33,7 @@ describe('Trip Setup screen', () => {
     await press('opening-add');
     await press('currency-THB');
     await type('opening-amount-0', '7,000');
-    expect(screen.getByTestId('trip-equivalent')).toHaveTextContent(/700\.00/); // ≈ ₪700.00 at 0.10
+    expect(screen.getByTestId('trip-equivalent')).toHaveTextContent(/₪700(?![.\d])/); // ≈ ₪700 at 0.10
     await press('trip-save');
 
     await waitFor(() => expect(r.getPathname()).toBe('/'));
@@ -68,7 +68,7 @@ describe('Trip Setup screen', () => {
     const id = mockServices.tripService.createTrip({ name: 'Old', startDate: '2026-11-01', endDate: '2026-11-10', reportingCurrency: 'ILS' }, [money(700000, 'THB')]);
     await openApp(`/trip-setup?tripId=${id}`);
     expect(screen.getByTestId('trip-name').props.value).toBe('Old');
-    expect(screen.getByTestId('opening-amount-0').props.value).toBe('7000.00');
+    expect(screen.getByTestId('opening-amount-0').props.value).toBe('7000');
     await type('trip-name', 'New');
     await type('opening-amount-0', '8000');
     await press('trip-save');

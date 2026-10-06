@@ -1,4 +1,4 @@
-import { convertByRatio, parseDecimal, type Decimal, type Money } from '../money';
+import { convertByRatio, divide, parseDecimal, type Decimal, type Money } from '../money';
 import { addDays, daysBetween } from '../time/dates';
 
 /**
@@ -85,4 +85,9 @@ export function resolveQuote(
 export function convertWithQuote(m: Money, q: RateQuote): Money {
   if (m.currency !== q.from) throw new Error(`Quote is for ${q.from}, amount is ${m.currency}`);
   return convertByRatio(m, q.numerator, q.denominator, q.to);
+}
+
+/** Display rate of a quote (1 `from` = rate `to`), exact division to `scale` decimals (half-up). */
+export function quoteRate(q: RateQuote, scale = 8): Decimal {
+  return divide(q.numerator, q.denominator, scale);
 }

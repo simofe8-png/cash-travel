@@ -18,7 +18,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import type { Money } from '../../domain/money';
 import { formatMoney } from '../format';
-import { colors, radius, space, touch, type } from '../theme/tokens';
+import { colors, headerOverlap, radius, shadow, space, type } from '../theme/tokens';
 
 type Variant = keyof typeof type;
 
@@ -58,12 +58,22 @@ export function Icon({ name, size = 22, color = colors.ink, directional }: { nam
   );
 }
 
-export function Screen(props: { children: ReactNode; scroll?: boolean; padded?: boolean; footer?: ReactNode; testID?: string }) {
+/**
+ * Screen frame. With `header` (a PhotoHeader) the header scrolls with the content, runs under the
+ * status bar, and the body overlaps it with a rounded top — the approved composition.
+ */
+export function Screen(props: { children: ReactNode; scroll?: boolean; padded?: boolean; footer?: ReactNode; header?: ReactNode; testID?: string }) {
   const { scroll = true, padded = true } = props;
   const insets = useSafeAreaInsets();
-  const content = <View style={[padded && styles.padded, styles.gap]}>{props.children}</View>;
+  const body = <View style={[padded && styles.padded, styles.gap, props.header ? styles.overlapBody : null]}>{props.children}</View>;
+  const content = (
+    <>
+      {props.header}
+      {body}
+    </>
+  );
   return (
-    <SafeAreaView style={styles.screen} edges={['top']} testID={props.testID}>
+    <SafeAreaView style={styles.screen} edges={props.header ? [] : ['top']} testID={props.testID}>
       {scroll ? (
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.scrollContent}>
           {content}
@@ -108,11 +118,12 @@ export function Row(props: { children: ReactNode; gap?: number; align?: ViewStyl
   );
 }
 
-type ButtonTone = 'primary' | 'secondary' | 'ghost' | 'danger';
+type ButtonTone = 'primary' | 'secondary' | 'soft' | 'ghost' | 'danger' | 'dangerSoft';
 
 export function Button(props: { label: string; onPress: () => void; tone?: ButtonTone; icon?: IconName; disabled?: boolean; busy?: boolean; testID?: string; compact?: boolean }) {
   const tone = props.tone ?? 'primary';
-  const fg = tone === 'primary' || tone === 'danger' ? colors.primaryInk : tone === 'ghost' ? colors.primary : colors.ink;
+  const fg =
+    tone === 'primary' || tone === 'danger' ? colors.primaryInk : tone === 'ghost' || tone === 'soft' ? colors.primary : tone === 'dangerSoft' ? colors.danger : colors.ink;
   return (
     <Pressable
       onPress={props.onPress}
@@ -198,12 +209,38 @@ export function Banner(props: { tone: 'warning' | 'danger' | 'info'; title: stri
   );
 }
 
-export function SectionTitle({ title, action }: { title: string; action?: ReactNode }) {
+export function SectionTitle({ title, action, icon }: { title: string; action?: ReactNode; icon?: IconName }) {
   return (
     <Row justify="space-between" style={styles.section}>
-      <AppText variant="heading">{title}</AppText>
+      <Row gap={space.sm} style={styles.flexShrink}>
+        {icon ? <Icon name={icon} color={colors.primary} size={22} /> : null}
+        <AppText variant="heading">{title}</AppText>
+      </Row>
       {action}
     </Row>
+  );
+}
+
+/** Small blue text link ("הצג הכל ›"). */
+export function LinkText({ label, onPress, testID }: { label: string; onPress: () => void; testID?: string }) {
+  return (
+    <Pressable onPress={onPress} accessibilityRole="link" accessibilityLabel={label} hitSlop={10} testID={testID}>
+      <Row gap={2}>
+        <AppText variant="label" color={colors.primary}>
+          {label}
+        </AppText>
+        <Icon name="chevron-left" size={18} color={colors.primary} />
+      </Row>
+    </Pressable>
+  );
+}
+
+/** Rounded-square tinted icon tile (category / action type). */
+export function IconTile({ icon, color, size = 44 }: { icon: IconName; color: string; size?: number }) {
+  return (
+    <View style={{ width: size, height: size, borderRadius: size * 0.28, backgroundColor: `${color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+      <Icon name={icon} color={color} size={size * 0.52} />
+    </View>
   );
 }
 
@@ -232,24 +269,28 @@ const styles = StyleSheet.create({
   mirrored: { transform: [{ scaleX: -1 }] },
   center: { textAlign: 'center' },
   screen: { flex: 1, backgroundColor: colors.paper },
+  overlapBody: { marginTop: -headerOverlap, borderTopLeftRadius: headerOverlap, borderTopRightRadius: headerOverlap, backgroundColor: colors.paper },
+  flexShrink: { flexShrink: 1 },
   scrollContent: { paddingBottom: space.xxl },
   padded: { padding: space.lg },
   gap: { gap: space.md },
   flex: { flex: 1 },
   footer: { padding: space.lg, paddingTop: space.sm, backgroundColor: colors.paper, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.line },
-  card: { backgroundColor: colors.surface, borderRadius: radius.md, padding: space.lg, gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line },
+  card: { backgroundColor: colors.surface, borderRadius: radius.lg - 4, padding: space.lg, gap: space.sm, borderWidth: StyleSheet.hairlineWidth, borderColor: colors.line, ...shadow },
   pressed: { opacity: 0.7 },
-  button: { minHeight: touch, borderRadius: radius.md, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  button: { minHeight: 52, borderRadius: radius.md, paddingHorizontal: space.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
   buttonCompact: { minHeight: 40, paddingHorizontal: space.md },
   button_primary: { backgroundColor: colors.primary },
-  button_secondary: { backgroundColor: colors.surfaceMuted },
+  button_secondary: { backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+  button_soft: { backgroundColor: colors.primarySoft },
+  button_dangerSoft: { backgroundColor: colors.dangerSoft },
   button_ghost: { backgroundColor: 'transparent' },
   button_danger: { backgroundColor: colors.danger },
   disabled: { opacity: 0.45 },
   chip: { minHeight: 40, paddingHorizontal: space.md, borderRadius: radius.pill, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, flexDirection: 'row', alignItems: 'center', gap: space.xs },
   chipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   field: { gap: space.xs },
-  input: { minHeight: touch, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 16, color: colors.ink },
+  input: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 16, color: colors.ink },
   inputRtl: { textAlign: 'right', writingDirection: 'rtl' },
   inputLtr: { textAlign: 'left', writingDirection: 'ltr' },
   inputError: { borderColor: colors.danger },

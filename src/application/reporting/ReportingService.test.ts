@@ -1,4 +1,4 @@
-import { money } from '../../domain/money';
+import { money, normalize, toDecimalString } from '../../domain/money';
 import { occurrenceAtLocal } from '../../domain/time';
 import { testServices } from '../../testing/services';
 
@@ -138,6 +138,17 @@ describe('Reporting Engine', () => {
     const t = reportingService.approximateEquivalent([money(1000000, 'THB'), money(5000, 'USD'), money(100, 'VND')], 'ILS', '2026-11-03');
     expect(t.amount).toEqual(ils(120000)); // 1,000 + 200
     expect(t.unavailable).toEqual([money(100, 'VND')]);
+  });
+
+  it('single-amount equivalent exposes the exact reference rate used; unavailable stays null', () => {
+    const s = scenario();
+    const e = s.reportingService.equivalent(money(85000, 'THB'), 'ILS', '2026-11-03')!;
+    expect(e.amount).toEqual(money(8500, 'ILS'));
+    expect(e.rate.from).toBe('THB');
+    expect(e.rate.to).toBe('ILS');
+    expect(toDecimalString(normalize(e.rate.rate))).toBe('0.1');
+    expect(e).toMatchObject({ rateDate: '2026-11-01', source: 'ECB' });
+    expect(s.reportingService.equivalent(money(100, 'VND'), 'ILS', '2026-11-03')).toBeNull();
   });
 
   it('before the trip starts there is no average per day; no budget fields exist', () => {

@@ -1,9 +1,9 @@
 import { useState } from 'react';
-import { Alert, Image, Modal, Pressable, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Modal, Pressable, StyleSheet, View } from 'react-native';
 
 import { useApp, useQuery } from '../AppContext';
 import { colors, radius, rtlRoot, space } from '../theme/tokens';
-import { AppText, Button, Card, Icon, Row } from './primitives';
+import { AppText, Button, Card, Icon, SectionTitle } from './primitives';
 
 const DENIED = 'כדי לצלם קבלה צריך לאשר גישה למצלמה. אפשר לאשר בהגדרות המכשיר.';
 
@@ -59,34 +59,34 @@ export function ReceiptSection({ transactionId }: { transactionId: number }) {
 
   return (
     <Card testID="receipt-section">
-      <AppText variant="heading">קבלה</AppText>
-      {uri ? (
-        <>
-          <Pressable onPress={() => setPreview(true)} accessibilityRole="imagebutton" accessibilityLabel="הצגת הקבלה" testID="receipt-thumb">
+      <SectionTitle title="קבלה / תמונה" icon="image-outline" />
+      <View style={styles.tiles}>
+        {uri ? (
+          <Pressable onPress={() => setPreview(true)} accessibilityRole="imagebutton" accessibilityLabel="הצגת הקבלה" testID="receipt-thumb" style={styles.tile}>
             <Image source={{ uri }} style={styles.thumb} resizeMode="cover" />
           </Pressable>
-          <Row>
-            <View style={{ flex: 1 }}>
-              <Button compact tone="secondary" icon="camera-retake-outline" label="החלפה" onPress={capture} busy={busy} testID="receipt-replace" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Button compact tone="ghost" icon="trash-can-outline" label="מחיקה" onPress={remove} testID="receipt-delete" />
-            </View>
-          </Row>
-          {preview ? <ReceiptPreview uri={uri} onClose={() => setPreview(false)} /> : null}
-        </>
-      ) : (
-        <Button compact tone="secondary" icon="camera-outline" label="צילום קבלה" onPress={capture} busy={busy} testID="receipt-capture" />
-      )}
+        ) : null}
+        <Pressable onPress={capture} disabled={busy} accessibilityRole="button" accessibilityLabel={uri ? 'החלפת הקבלה' : 'צילום קבלה'} testID={uri ? 'receipt-replace' : 'receipt-capture'} style={({ pressed }) => [styles.tile, styles.add, pressed && { opacity: 0.7 }]}>
+          {busy ? <ActivityIndicator color={colors.primary} /> : <Icon name={uri ? 'camera-retake-outline' : 'plus-circle'} color={colors.primary} size={36} />}
+          <AppText variant="label" color={colors.primary} center>
+            {uri ? 'החלפה' : 'הוספת תמונה'}
+          </AppText>
+        </Pressable>
+      </View>
+      {uri ? <Button compact tone="ghost" icon="trash-can-outline" label="מחיקת הקבלה" onPress={remove} testID="receipt-delete" /> : null}
       <AppText variant="caption" color={colors.inkMuted}>
         התמונה נשמרת רק באפליקציה, במכשיר הזה.
       </AppText>
+      {uri && preview ? <ReceiptPreview uri={uri} onClose={() => setPreview(false)} /> : null}
     </Card>
   );
 }
 
 const styles = StyleSheet.create({
-  thumb: { width: '100%', height: 180, borderRadius: radius.sm, backgroundColor: colors.surfaceMuted },
+  tiles: { flexDirection: 'row', gap: space.md },
+  tile: { width: '47%', aspectRatio: 1, borderRadius: radius.md, overflow: 'hidden', backgroundColor: colors.surfaceMuted },
+  add: { alignItems: 'center', justifyContent: 'center', gap: space.xs, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#9DBCF7', backgroundColor: colors.surface },
+  thumb: { width: '100%', height: '100%' },
   preview: { backgroundColor: '#000', justifyContent: 'center' },
   full: { flex: 1 },
   close: { position: 'absolute', top: space.xxl + space.lg, left: space.lg, padding: space.sm },

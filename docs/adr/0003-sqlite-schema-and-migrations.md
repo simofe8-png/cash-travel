@@ -54,3 +54,16 @@ The DB itself rejects most invalid financial states even if application code reg
 `src/data/db/migrate.test.ts` (12) and `src/data/db/schema.test.ts` (12): STRICT tables, indexes, seeds, per-type
 CHECKs (incl. INCOME/REFUND rejected), FK/trigger enforcement, immutability, soft-delete-only, card credential
 columns absent, estimate/actual consistency, FX cache uniqueness, receipt path confinement.
+
+## Amendment — Step 28 (2026-10-06): upgrade safety and integrity
+- **Pre-upgrade snapshot.** When the stored schema version is older than the app's (`needsUpgrade`), the app writes
+  `VACUUM INTO <documents>/SQLite/cashtravel.pre-upgrade-v{N}.db` before migrating (never overwriting an existing
+  snapshot). The copy stays app-private (backup is disabled, ADR/SECURITY review). A fresh install takes no snapshot.
+- **Table rebuilds.** A migration may set `rebuildsTables: true`. The runner then switches foreign-key enforcement off
+  *outside* the transaction (SQLite cannot change it inside one), runs the migration, requires `PRAGMA
+  foreign_key_check` to be empty before committing, and always restores enforcement afterwards — SQLite's documented
+  12-step procedure. A rebuild that would orphan rows is rolled back completely.
+- **Integrity check.** `IntegrityService.check()` (port `IntegrityQueries`) combines `PRAGMA quick_check`,
+  `foreign_key_check`, ledger-vs-`cashEffects` consistency, card charges attached to non-card actions and
+  cross-trip ledger entries. Verified by `src/data/db/upgrade.test.ts` on a populated v1 database (every
+  transaction type, edits, soft delete, card charge, receipt, FX cache).

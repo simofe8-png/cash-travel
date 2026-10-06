@@ -5,6 +5,12 @@ export interface Migration {
   readonly version: number;
   readonly name: string;
   readonly up: (db: SqlDatabase) => void;
+  /**
+   * Set for SQLite table rebuilds (create new → copy → drop old → rename). Foreign-key enforcement
+   * is switched off around the migration (it cannot change inside a transaction) and the migration
+   * only commits if `PRAGMA foreign_key_check` is clean — the procedure documented by SQLite.
+   */
+  readonly rebuildsTables?: boolean;
 }
 
 export class MigrationError extends Error {
@@ -66,14 +72,20 @@ export function migrate(db: SqlDatabase, migrations: readonly Migration[], now: 
   }
   const applied: number[] = [];
   for (const m of migrations.slice(from)) {
+    if (m.rebuildsTables) db.exec('PRAGMA foreign_keys = OFF');
     try {
       inTransaction(db, () => {
         m.up(db);
+        if (m.rebuildsTables && db.all('PRAGMA foreign_key_check').length > 0) {
+          throw new Error('foreign key violations after table rebuild');
+        }
         db.run('INSERT INTO schema_migrations (version, name, applied_at) VALUES (?, ?, ?)', [m.version, m.name, now()]);
         db.exec(`PRAGMA user_version = ${m.version}`);
       });
     } catch (e) {
       throw new MigrationError(`Migration ${m.version} (${m.name}) failed: ${(e as Error).message}`, m.version);
+    } finally {
+      if (m.rebuildsTables) configureConnection(db);
     }
     applied.push(m.version);
   }

@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
-import { AppState } from 'react-native';
+import { Alert, AppState } from 'react-native';
 
 import type { RateNeed } from '../application/fx/FxRateService';
 import { useApp } from './AppContext';
+import { renderTripReportHtml } from './report/reportHtml';
 
 /**
  * Background reference-rate refresh for display purposes. Never on a save path: failures are
@@ -44,4 +45,24 @@ export function useRateRefresh(needs: readonly RateNeed[], target: string | null
     // `key` captures needs/target/foreground retries.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
+}
+
+/** PDF trip report via the Android share/save sheet (Settings and Summary share this flow). */
+export function useReportExport(tripId: number | null): { exporting: boolean; exportReport: () => Promise<void> } {
+  const { services } = useApp();
+  const [exporting, setExporting] = useState(false);
+  const exportReport = async () => {
+    if (tripId === null) return;
+    setExporting(true);
+    try {
+      const r = await services.tripReportService.share(tripId, renderTripReportHtml);
+      if (r === 'sharing_unavailable') Alert.alert('לא ניתן לשתף', 'שיתוף קבצים אינו זמין במכשיר הזה.');
+    } catch (e) {
+      console.warn('PDF export failed:', (e as Error).message);
+      Alert.alert('הדוח לא נוצר', 'נסו שוב.');
+    } finally {
+      setExporting(false);
+    }
+  };
+  return { exporting, exportReport };
 }

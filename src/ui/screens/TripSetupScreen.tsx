@@ -1,16 +1,18 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { TripValidationError } from '../../application/trips/TripService';
-import { money, parseAmount, type Money } from '../../domain/money';
+import { currencyInfo, money, parseAmount, type Money } from '../../domain/money';
 import { addDays } from '../../domain/time';
 import { useApp, useQuery } from '../AppContext';
-import { AmountInput, CurrencyButton, CurrencyPicker, DateField } from '../components/pickers';
-import { AppText, Banner, Button, Card, Field, Icon, Row, Screen, SectionTitle } from '../components/primitives';
+import { Flag } from '../components/Flag';
+import { HeaderButton, PhotoHeader } from '../components/PhotoHeader';
+import { AmountInput, CurrencyPicker, DateField } from '../components/pickers';
+import { AppText, Banner, Button, Card, Field, Icon, Row, Screen } from '../components/primitives';
 import { formatMoney, plainAmount } from '../format';
 import { useRateRefresh } from '../hooks';
-import { colors } from '../theme/tokens';
+import { colors, radius, space } from '../theme/tokens';
 
 interface OpeningRow {
   key: number;
@@ -103,81 +105,116 @@ export function TripSetupScreen() {
     }
   }
 
+  const canClose = editId !== null || services.tripService.listTrips().length > 0;
+
   return (
     <Screen
       testID="screen-tripsetup"
-      footer={<Button label={editId === null ? 'יצירת טיול' : 'שמירת שינויים'} icon="check" onPress={save} busy={busy} testID="trip-save" />}>
-      <Row justify="space-between">
-        <AppText variant="title">{editId === null ? 'טיול חדש' : 'עריכת טיול'}</AppText>
-        {editId !== null || services.tripService.listTrips().length > 0 ? (
-          <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="סגירה" hitSlop={12} testID="trip-close">
-            <Icon name="close" color={colors.inkMuted} />
-          </Pressable>
-        ) : null}
-      </Row>
-
+      header={
+        <PhotoHeader
+          title={editId === null ? 'טיול חדש' : 'עריכת טיול'}
+          subtitle={editId === null ? 'ואנחנו מתחילים' : undefined}
+          end={canClose ? <HeaderButton icon="close" label="סגירה" onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} testID="trip-close" /> : undefined}
+        />
+      }
+      footer={<Button label={editId === null ? 'התחל טיול' : 'שמירת שינויים'} onPress={save} busy={busy} testID="trip-save" />}>
       {errors.length ? <Banner tone="danger" title="יש לתקן לפני שמירה" body={errors.join('\n')} testID="trip-errors" /> : null}
 
-      <Field label="שם הטיול" value={name} onChangeText={setName} placeholder="למשל: תאילנד 2026" maxLength={80} testID="trip-name" />
-      <Row align="flex-start">
-        <DateField label="התחלה" value={start} onChange={(d) => { setStart(d); if (end < d) setEnd(d); }} testID="trip-start" />
-        <DateField label="סיום" value={end} min={start} onChange={setEnd} testID="trip-end" />
-      </Row>
-
-      <View style={{ gap: 4 }}>
-        <AppText variant="label" color={colors.inkMuted}>
-          מטבע לדיווח
-        </AppText>
-        <Row>
-          <CurrencyButton code={reporting} onPress={() => setPicker({ kind: 'reporting' })} testID="trip-reporting" />
-          <AppText variant="caption" color={colors.inkMuted} style={{ flex: 1 }}>
+      <Card style={styles.form}>
+        <Field label="שם הטיול" value={name} onChangeText={setName} placeholder="למשל: תאילנד 2026" maxLength={80} testID="trip-name" />
+        <Row align="flex-start">
+          <DateField
+            label="תאריך התחלה"
+            value={start}
+            onChange={(d) => {
+              setStart(d);
+              if (end < d) setEnd(d);
+            }}
+            testID="trip-start"
+          />
+          <DateField label="תאריך סיום" value={end} min={start} onChange={setEnd} testID="trip-end" />
+        </Row>
+        <View style={{ gap: space.xs }}>
+          <AppText variant="label" color={colors.inkMuted}>
+            מטבע דיווח
+          </AppText>
+          <Pressable onPress={() => setPicker({ kind: 'reporting' })} accessibilityRole="button" accessibilityLabel={`מטבע דיווח ${reporting}`} testID="trip-reporting" style={({ pressed }) => [styles.select, pressed && { opacity: 0.7 }]}>
+            <Flag currency={reporting} />
+            <AppText style={styles.flex}>{`${currencyInfo(reporting).nameHe} (${reporting})`}</AppText>
+            <Icon name="chevron-down" size={20} color={colors.inkMuted} />
+          </Pressable>
+          <AppText variant="caption" color={colors.inkMuted}>
             הסיכומים יוצגו במטבע הזה. אפשר לשנות בכל עת — הנתונים המקוריים לא משתנים.
           </AppText>
-        </Row>
-      </View>
+        </View>
+      </Card>
 
-      <SectionTitle title="מזומן בתחילת הטיול" />
-      <AppText variant="label" color={colors.inkMuted}>
-        כמה מזומן יש לך בכל מטבע ברגע זה. זו לא תקציב — רק נקודת הפתיחה של הארנק.
-      </AppText>
-      {rows.map((r, i) => {
-        const err = parsed[i]?.error;
-        return (
-          <Card key={r.key}>
-            <Row>
-              <CurrencyButton code={r.currency} onPress={() => setPicker({ kind: 'row', key: r.key })} testID={`opening-currency-${i}`} />
-              <AmountInput value={r.text} onChange={(t) => setRows((rs) => rs.map((x) => (x.key === r.key ? { ...x, text: t } : x)))} error={!!err && r.text !== ''} testID={`opening-amount-${i}`} />
-              <Pressable onPress={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} accessibilityRole="button" accessibilityLabel="הסרת מטבע" hitSlop={10} testID={`opening-remove-${i}`}>
-                <Icon name="trash-can-outline" color={colors.inkMuted} />
-              </Pressable>
-            </Row>
-            {err && r.text !== '' ? (
-              <AppText variant="caption" color={colors.danger}>
-                {err}
-              </AppText>
-            ) : null}
-          </Card>
-        );
-      })}
-      <Button label="הוספת מטבע" icon="plus" tone="secondary" onPress={() => setPicker({ kind: 'new' })} testID="opening-add" />
+      <Card style={styles.form}>
+        <AppText variant="heading">יתרות התחלה (לא חובה)</AppText>
+        <AppText variant="caption" color={colors.inkMuted}>
+          כמה מזומן יש לך בכל מטבע ברגע זה. זה לא תקציב — רק נקודת הפתיחה של הארנק.
+        </AppText>
+        {rows.map((r, i) => {
+          const err = parsed[i]?.error;
+          const info = currencyInfo(r.currency);
+          return (
+            <View key={r.key} style={{ gap: 4 }}>
+              <View style={styles.opening}>
+                <Pressable onPress={() => setPicker({ kind: 'row', key: r.key })} accessibilityRole="button" accessibilityLabel={`מטבע ${r.currency}`} testID={`opening-currency-${i}`} style={styles.openingCurrency}>
+                  <Flag currency={r.currency} size={26} />
+                  <View style={styles.shrink}>
+                    <AppText style={styles.bold}>{r.currency}</AppText>
+                    <AppText variant="caption" color={colors.inkMuted} numberOfLines={1}>
+                      {info.nameHe}
+                    </AppText>
+                  </View>
+                </Pressable>
+                <View style={styles.amountBox}>
+                  <AmountInput value={r.text} onChange={(t) => setRows((rs) => rs.map((x) => (x.key === r.key ? { ...x, text: t } : x)))} error={!!err && r.text !== ''} testID={`opening-amount-${i}`} />
+                  <AppText variant="heading" color={colors.inkMuted}>
+                    {info.symbol}
+                  </AppText>
+                </View>
+                <Pressable onPress={() => setRows((rs) => rs.filter((x) => x.key !== r.key))} accessibilityRole="button" accessibilityLabel="הסרת מטבע" hitSlop={10} testID={`opening-remove-${i}`}>
+                  <Icon name="trash-can-outline" color={colors.inkMuted} />
+                </Pressable>
+              </View>
+              {err && r.text !== '' ? (
+                <AppText variant="caption" color={colors.danger}>
+                  {err}
+                </AppText>
+              ) : null}
+            </View>
+          );
+        })}
+        <Pressable onPress={() => setPicker({ kind: 'new' })} accessibilityRole="button" accessibilityLabel="הוספת מטבע" testID="opening-add" style={({ pressed }) => [styles.addCurrency, pressed && { opacity: 0.7 }]}>
+          <Icon name="plus-circle" color={colors.primary} size={26} />
+          <AppText variant="heading" color={colors.primary}>
+            הוסף מטבע
+          </AppText>
+        </Pressable>
+      </Card>
 
       {validAmounts.length ? (
-        <Card testID="trip-equivalent">
-          <AppText variant="label" color={colors.inkMuted}>
-            שווי משוער לפי שער ייחוס
-          </AppText>
-          <AppText variant="title">{`≈ ${formatMoney(equivalent.amount)}`}</AppText>
-          {equivalent.unavailableCount ? (
-            <AppText variant="caption" color={colors.warning}>
-              {`אין עדיין שער עבור ${equivalent.unavailable.map((m) => formatMoney(m)).join(', ')} — יתעדכן כשיהיה חיבור לרשת.`}
+        <View style={styles.info} testID="trip-equivalent">
+          <Icon name="information-outline" color={colors.primary} />
+          <View style={styles.flex}>
+            <AppText variant="label" color={colors.inkMuted}>
+              שווי משוער לפי שער ייחוס (לא מזומן בפועל)
             </AppText>
-          ) : null}
-        </Card>
+            <AppText variant="title">{`≈ ${formatMoney(equivalent.amount)}`}</AppText>
+            {equivalent.unavailableCount ? (
+              <AppText variant="caption" color={colors.warning}>
+                {`אין עדיין שער עבור ${equivalent.unavailable.map((m) => formatMoney(m)).join(', ')} — יתעדכן כשיהיה חיבור לרשת.`}
+              </AppText>
+            ) : null}
+          </View>
+        </View>
       ) : null}
 
       <CurrencyPicker
         visible={picker !== null}
-        title={picker?.kind === 'reporting' ? 'מטבע לדיווח' : 'מטבע'}
+        title={picker?.kind === 'reporting' ? 'מטבע דיווח' : 'מטבע'}
         selected={picker?.kind === 'reporting' ? reporting : picker?.kind === 'row' ? rows.find((r) => r.key === picker.key)?.currency : undefined}
         suggested={['ILS', 'USD', 'EUR', 'THB', 'GBP', 'JPY']}
         exclude={picker?.kind === 'new' ? usedCurrencies : picker?.kind === 'row' ? usedCurrencies.filter((c) => c !== rows.find((r) => r.key === picker.key)?.currency) : undefined}
@@ -192,3 +229,16 @@ export function TripSetupScreen() {
     </Screen>
   );
 }
+
+const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  bold: { fontWeight: '700' },
+  shrink: { flexShrink: 1 },
+  form: { gap: space.md },
+  select: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  opening: { flexDirection: 'row', alignItems: 'center', gap: space.sm, padding: space.sm, borderRadius: radius.md, borderWidth: 1, borderColor: colors.line },
+  openingCurrency: { flexDirection: 'row', alignItems: 'center', gap: space.sm, width: '38%' },
+  amountBox: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  addCurrency: { minHeight: 56, borderRadius: radius.md, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#9DBCF7', backgroundColor: colors.primarySoft, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm },
+  info: { flexDirection: 'row', gap: space.md, padding: space.lg, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line },
+});

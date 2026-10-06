@@ -8,10 +8,10 @@ import { money, parseAmount, type Money } from '../../domain/money';
 import { localTimeOf, occurrenceAtLocal } from '../../domain/time';
 import { useApp, useQuery } from '../AppContext';
 import { AmountInput, CurrencyButton, CurrencyPicker, DateField } from '../components/pickers';
-import { AppText, Banner, Button, Card, Chip, Field, Icon, Row, Screen, SectionTitle } from '../components/primitives';
+import { AppText, Banner, Button, Card, Field, Icon, Row, Screen, type IconName } from '../components/primitives';
 import { formatMoney, formatRate, plainAmount } from '../format';
 import { categoryLabel, he } from '../i18n/he';
-import { categoryIcon } from '../present';
+import { categoryColor, categoryIcon } from '../present';
 import { colors, radius, space } from '../theme/tokens';
 
 type Mode = Extract<TransactionType, 'EXPENSE' | 'FX_EXCHANGE' | 'ATM_WITHDRAWAL' | 'CASH_ADJUSTMENT'>;
@@ -31,6 +31,38 @@ function readAmount(text: string, currency: string, allowZero = false): { value:
   if (!p.ok) return { value: null, error: AMOUNT_ERRORS[p.error] ?? 'סכום לא תקין' };
   if (p.minor === 0 && !allowZero) return { value: null, error: 'סכום חייב להיות גדול מאפס' };
   return { value: money(p.minor, currency), error: null };
+}
+
+const MODE_STYLE: Record<Exclude<Mode, 'CASH_ADJUSTMENT'>, { label: string; icon: IconName; color: string }> = {
+  EXPENSE: { label: 'הוצאה', icon: 'silverware-fork-knife', color: colors.primary },
+  FX_EXCHANGE: { label: 'המרת מטבע', icon: 'swap-horizontal', color: colors.primary },
+  ATM_WITHDRAWAL: { label: 'משיכת מזומן', icon: 'cash-plus', color: colors.atm },
+};
+
+function Label({ children }: { children: string }) {
+  return (
+    <AppText variant="label" color={colors.inkMuted}>
+      {children}
+    </AppText>
+  );
+}
+
+/** Selectable tile (category / payment method) in the approved Add Action style. */
+function Tile(props: { label: string; icon: IconName; color: string; selected: boolean; onPress: () => void; testID?: string; wide?: boolean }) {
+  return (
+    <Pressable
+      onPress={props.onPress}
+      accessibilityRole="button"
+      accessibilityState={{ selected: props.selected }}
+      accessibilityLabel={props.label}
+      testID={props.testID}
+      style={({ pressed }) => [styles.tile, props.wide && styles.tileWide, { backgroundColor: props.selected ? colors.primarySoft : `${props.color}12` }, props.selected && styles.tileSelected, pressed && { opacity: 0.7 }]}>
+      <Icon name={props.icon} color={props.color} size={26} />
+      <AppText variant="caption" color={props.selected ? colors.primary : colors.ink} center numberOfLines={1} style={props.selected ? styles.bold : undefined}>
+        {props.label}
+      </AppText>
+    </Pressable>
+  );
 }
 
 function MoneyEntry(props: { label: string; text: string; onText: (t: string) => void; currency: string; onCurrency: () => void; id: string; big?: boolean; autoFocus?: boolean; error?: string | null }) {
@@ -193,6 +225,12 @@ export function AddActionScreen() {
   );
   const rate = mode === 'FX_EXCHANGE' && main.value && other.value && main.value.currency !== other.value.currency ? exchangeRateView(main.value, other.value).display : null;
   const currentBalance = ctx?.wallets.find((w) => w.currency === currency)?.current ?? money(0, currency);
+  const reportingCurrency = ctx?.trip.reportingCurrency ?? 'ILS';
+  // Display-only reference equivalent (cached rates; never on the save path).
+  const equivalent = useQuery(
+    (s) => (main.value && main.value.currency !== reportingCurrency && (mode === 'EXPENSE' || mode === 'ATM_WITHDRAWAL') ? s.reportingService.equivalent(main.value, reportingCurrency, date) : null),
+    [main.value, reportingCurrency, date, mode],
+  );
 
   if (!ctx) return null;
   const tripId = ctx.trip.id;
@@ -267,168 +305,229 @@ export function AddActionScreen() {
     return c ? c.nickname || he.issuers[c.issuer] || 'כרטיס' : 'כרטיס';
   };
 
+  const modeTile = (m: Exclude<Mode, 'CASH_ADJUSTMENT'>) => {
+    const st = MODE_STYLE[m];
+    const selected = mode === m;
+    return (
+      <Pressable
+        key={m}
+        onPress={() => {
+          setMode(m);
+          setErrors([]);
+          setShowErrors(false);
+        }}
+        accessibilityRole="tab"
+        accessibilityState={{ selected }}
+        accessibilityLabel={st.label}
+        testID={`mode-${m}`}
+        style={[styles.mode, selected && styles.modeSelected]}>
+        <Icon name={st.icon} color={st.color} size={30} />
+        <AppText variant="label" color={st.color} center numberOfLines={2} style={styles.bold}>
+          {st.label}
+        </AppText>
+      </Pressable>
+    );
+  };
+
   return (
-    <Screen testID="screen-addaction" footer={<Button label={he.common.save} icon="check" onPress={save} testID="add-save" />}>
-      <Row justify="space-between">
-        <AppText variant="title">{editing ? 'עריכת פעולה' : mode === 'CASH_ADJUSTMENT' ? he.types.CASH_ADJUSTMENT : 'פעולה חדשה'}</AppText>
-        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="סגירה" hitSlop={12} testID="add-close">
-          <Icon name="close" color={colors.inkMuted} />
+    <Screen testID="screen-addaction" footer={<Button label={editing ? 'שמירת שינויים' : 'שמור פעולה'} onPress={save} testID="add-save" />}>
+      <Row align="flex-start">
+        <View style={styles.headerSide} />
+        <View style={styles.headerTitles}>
+          <AppText variant="title" center>
+            {editing ? 'עריכת פעולה' : mode === 'CASH_ADJUSTMENT' ? he.types.CASH_ADJUSTMENT : 'הוספת פעולה'}
+          </AppText>
+          {!editing && mode !== 'CASH_ADJUSTMENT' ? (
+            <AppText variant="label" color={colors.inkMuted} center>
+              בחרו סוג פעולה והזינו את הפרטים
+            </AppText>
+          ) : null}
+        </View>
+        <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="סגירה" hitSlop={12} testID="add-close" style={[styles.headerSide, styles.headerClose]}>
+          <Icon name="close" color={colors.primary} size={30} />
         </Pressable>
       </Row>
 
-      {mode !== 'CASH_ADJUSTMENT' && !editing ? (
-        <View style={styles.segment}>
-          {MODES.map((m) => (
-            <Pressable key={m} onPress={() => { setMode(m); setErrors([]); setShowErrors(false); }} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} testID={`mode-${m}`} style={[styles.segmentItem, mode === m && styles.segmentSelected]}>
-              <AppText variant="label" color={mode === m ? colors.primaryInk : colors.ink} center>
-                {m === 'EXPENSE' ? 'הוצאה' : m === 'FX_EXCHANGE' ? 'המרה' : 'כספומט'}
-              </AppText>
-            </Pressable>
-          ))}
-        </View>
-      ) : null}
+      {mode !== 'CASH_ADJUSTMENT' && !editing ? <View style={styles.modes}>{MODES.map((m) => modeTile(m as Exclude<Mode, 'CASH_ADJUSTMENT'>))}</View> : null}
 
       {errors.length ? <Banner tone="danger" title="לא נשמר" body={errors.join('\n')} testID="add-errors" /> : null}
 
-      {mode === 'EXPENSE' ? (
-        <>
-          <MoneyEntry label="סכום" id="expense" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors && amountText !== '' ? main.error : null} />
-          <SectionTitle title="קטגוריה" />
-          <View style={styles.grid}>
-            {ctx.categories.map((c) => {
-              const selected = categoryId === c.id;
-              return (
-                <Pressable key={c.id} onPress={() => setCategoryId(c.id)} accessibilityRole="button" accessibilityState={{ selected }} accessibilityLabel={categoryLabel(c)} testID={`category-${c.builtinKey ?? c.id}`} style={[styles.tile, selected && styles.tileSelected]}>
-                  <Icon name={categoryIcon(c.icon)} color={selected ? colors.primaryInk : colors.primary} />
-                  <AppText variant="caption" color={selected ? colors.primaryInk : colors.ink} center numberOfLines={2}>
-                    {categoryLabel(c)}
-                  </AppText>
-                </Pressable>
-              );
-            })}
-          </View>
-          <SectionTitle title="אמצעי תשלום" />
-          <Row wrap>
-            <Chip label={he.payment.CASH} icon="cash" selected={payment.method === 'CASH'} onPress={() => setPayment({ method: 'CASH' })} testID="pay-cash" />
-            {ctx.cards.map((c) => (
-              <Chip key={c.id} label={cardLabel(c.id)} icon="credit-card-outline" selected={payment.method === 'CARD' && payment.cardId === c.id} onPress={() => setPayment({ method: 'CARD', cardId: c.id })} testID={`pay-card-${c.id}`} />
-            ))}
-            <Chip label={ctx.cards.length ? 'כרטיס אחר' : he.payment.unspecifiedCard} icon="credit-card-outline" selected={payment.method === 'CARD' && payment.cardId === null} onPress={() => setPayment({ method: 'CARD', cardId: null })} testID="pay-card-any" />
-          </Row>
-          {payment.method === 'CARD' ? (
+      <Card style={styles.form}>
+        {mode === 'EXPENSE' ? (
+          <>
+            <MoneyEntry label="סכום" id="expense" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors && amountText !== '' ? main.error : null} />
+            <Label>קטגוריה</Label>
+            <View style={styles.grid}>
+              {ctx.categories.map((c) => (
+                <Tile key={c.id} label={categoryLabel(c)} icon={categoryIcon(c.icon)} color={categoryColor(c.icon)} selected={categoryId === c.id} onPress={() => setCategoryId(c.id)} testID={`category-${c.builtinKey ?? c.id}`} />
+              ))}
+            </View>
+            <Label>אמצעי תשלום</Label>
+            <View style={styles.grid}>
+              <Tile wide label={he.payment.CASH} icon="cash" color={colors.success} selected={payment.method === 'CASH'} onPress={() => setPayment({ method: 'CASH' })} testID="pay-cash" />
+              {ctx.cards.map((c) => (
+                <Tile wide key={c.id} label={cardLabel(c.id)} icon="credit-card-outline" color={colors.card} selected={payment.method === 'CARD' && payment.cardId === c.id} onPress={() => setPayment({ method: 'CARD', cardId: c.id })} testID={`pay-card-${c.id}`} />
+              ))}
+              <Tile wide label={ctx.cards.length ? 'כרטיס אחר' : he.payment.unspecifiedCard} icon="credit-card-plus-outline" color={colors.card} selected={payment.method === 'CARD' && payment.cardId === null} onPress={() => setPayment({ method: 'CARD', cardId: null })} testID="pay-card-any" />
+            </View>
+            {payment.method === 'CARD' ? (
+              <AppText variant="caption" color={colors.inkMuted}>
+                תשלום באשראי נספר כהוצאה אבל לא מוריד מזומן מהארנק.
+              </AppText>
+            ) : null}
+          </>
+        ) : null}
+
+        {mode === 'FX_EXCHANGE' ? (
+          <>
+            <MoneyEntry label="נתתי" id="fx-given" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? main.error : null} />
+            <MoneyEntry label="קיבלתי" id="fx-received" big text={otherText} onText={setOtherText} currency={otherCurrency} onCurrency={() => setPicker('other')} error={showErrors ? other.error : null} />
+            {rate ? (
+              <View style={styles.infoPanel} testID="fx-rate">
+                <Icon name="swap-horizontal" color={colors.primary} />
+                <View style={styles.flex}>
+                  <Label>שער בפועל</Label>
+                  <AppText variant="heading">{formatRate(rate.from, rate.to, rate.rate)}</AppText>
+                </View>
+              </View>
+            ) : null}
             <AppText variant="caption" color={colors.inkMuted}>
-              תשלום באשראי נספר כהוצאה אבל לא מוריד מזומן מהארנק.
+              המרה מעבירה כסף בין ארנקים — היא לא נספרת כהוצאה.
             </AppText>
-          ) : null}
-        </>
-      ) : null}
+          </>
+        ) : null}
 
-      {mode === 'FX_EXCHANGE' ? (
-        <>
-          <MoneyEntry label="נתתי" id="fx-given" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? main.error : null} />
-          <MoneyEntry label="קיבלתי" id="fx-received" big text={otherText} onText={setOtherText} currency={otherCurrency} onCurrency={() => setPicker('other')} error={showErrors ? other.error : null} />
-          {rate ? (
-            <Card testID="fx-rate">
-              <AppText variant="label" color={colors.inkMuted}>
-                שער בפועל
-              </AppText>
-              <AppText variant="heading">{formatRate(rate.from, rate.to, rate.rate)}</AppText>
-            </Card>
-          ) : null}
-          <AppText variant="caption" color={colors.inkMuted}>
-            המרה מעבירה כסף בין ארנקים — היא לא נספרת כהוצאה.
-          </AppText>
-        </>
-      ) : null}
+        {mode === 'ATM_WITHDRAWAL' ? (
+          <>
+            <MoneyEntry label="כמה מזומן קיבלתי" id="atm" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? main.error : null} />
+            <Field label={`עמלת כספומט מקומית (${currency}) — ${he.common.optional}`} value={feeText} onChangeText={setFeeText} keyboardType="decimal-pad" ltrInput testID="atm-fee" />
+            <Label>מאיזה כרטיס</Label>
+            <View style={styles.grid}>
+              {ctx.cards.map((c) => (
+                <Tile wide key={c.id} label={cardLabel(c.id)} icon="credit-card-outline" color={colors.card} selected={atmCard === c.id} onPress={() => setAtmCard(c.id)} testID={`atm-card-${c.id}`} />
+              ))}
+              <Tile wide label={ctx.cards.length ? 'כרטיס אחר' : he.payment.unspecifiedCard} icon="credit-card-plus-outline" color={colors.card} selected={atmCard === null} onPress={() => setAtmCard(null)} testID="atm-card-any" />
+            </View>
+            <AppText variant="caption" color={colors.inkMuted}>
+              משיכה מוסיפה מזומן לארנק ואינה הוצאה. העמלה נרשמת כעלות של הטיול.
+            </AppText>
+          </>
+        ) : null}
 
-      {mode === 'ATM_WITHDRAWAL' ? (
-        <>
-          <MoneyEntry label="כמה מזומן קיבלתי" id="atm" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? main.error : null} />
-          <Field label={`עמלת כספומט מקומית (${currency}) — ${he.common.optional}`} value={feeText} onChangeText={setFeeText} keyboardType="decimal-pad" ltrInput testID="atm-fee" />
-          <SectionTitle title="מאיזה כרטיס" />
-          <Row wrap>
-            {ctx.cards.map((c) => (
-              <Chip key={c.id} label={cardLabel(c.id)} icon="credit-card-outline" selected={atmCard === c.id} onPress={() => setAtmCard(c.id)} testID={`atm-card-${c.id}`} />
-            ))}
-            <Chip label={ctx.cards.length ? 'כרטיס אחר' : he.payment.unspecifiedCard} icon="credit-card-outline" selected={atmCard === null} onPress={() => setAtmCard(null)} testID="atm-card-any" />
-          </Row>
-          <AppText variant="caption" color={colors.inkMuted}>
-            משיכה מוסיפה מזומן לארנק ואינה הוצאה. העמלה נרשמת כעלות של הטיול.
-          </AppText>
-        </>
-      ) : null}
+        {mode === 'CASH_ADJUSTMENT' && editing ? (
+          <MoneyEntry label="תיקון (חיובי = נמצא יותר מזומן, מינוס = חסר)" id="adjust-delta" big text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors && !delta ? 'נא להזין תיקון שונה מאפס' : null} />
+        ) : null}
 
-      {mode === 'CASH_ADJUSTMENT' && editing ? (
-        <MoneyEntry label="תיקון (חיובי = נמצא יותר מזומן, מינוס = חסר)" id="adjust-delta" big text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors && !delta ? 'נא להזין תיקון שונה מאפס' : null} />
-      ) : null}
-
-      {mode === 'CASH_ADJUSTMENT' && !editing ? (
-        <>
-          <AppText color={colors.inkMuted}>ספרו את המזומן בארנק והזינו כמה יש בפועל. האפליקציה תרשום את ההפרש כתיקון — היתרה תמיד מחושבת מהפעולות.</AppText>
-          <Card>
-            <Row justify="space-between">
-              <AppText variant="label" color={colors.inkMuted}>
-                יתרה רשומה
-              </AppText>
+        {mode === 'CASH_ADJUSTMENT' && !editing ? (
+          <>
+            <AppText color={colors.inkMuted}>ספרו את המזומן בארנק והזינו כמה יש בפועל. האפליקציה תרשום את ההפרש כתיקון — היתרה תמיד מחושבת מהפעולות.</AppText>
+            <Row justify="space-between" style={styles.infoPanel}>
+              <Label>יתרה רשומה</Label>
               <AppText variant="heading" color={currentBalance.minor < 0 ? colors.danger : colors.ink}>
                 {formatMoney(currentBalance)}
               </AppText>
             </Row>
-          </Card>
-          <MoneyEntry label="כמה יש בארנק בפועל" id="adjust" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? counted.error : null} />
-          {diff ? (
-            <Card testID="adjust-diff">
-              <AppText variant="label" color={colors.inkMuted}>
-                {diff.minor === 0 ? 'אין הפרש — לא יירשם תיקון' : 'ההפרש שיירשם'}
-              </AppText>
-              {diff.minor !== 0 ? <AppText variant="heading">{formatMoney(diff, { signed: true })}</AppText> : null}
-            </Card>
-          ) : null}
-        </>
-      ) : null}
-
-      <Collapsible title={he.common.more} testID="add-advanced">
-        <Row align="flex-start">
-          <DateField label="תאריך" value={date} onChange={(d) => { setDate(d); setWhenTouched(true); }} testID="add-date" />
-          <View style={{ flex: 1 }}>
-            <Field label="שעה" value={time} onChangeText={(t) => { setTime(t); setWhenTouched(true); }} placeholder="HH:MM" keyboardType="numbers-and-punctuation" ltrInput maxLength={5} testID="add-time" />
-          </View>
-        </Row>
-        {mode === 'EXPENSE' ? <Field label="תיאור" value={description} onChangeText={setDescription} maxLength={120} placeholder="למשל: ארוחת ערב" testID="add-description" /> : null}
-        <Field label="מקום" value={place} onChangeText={setPlace} maxLength={120} placeholder="למשל: צ׳יאנג מאי" testID="add-place" />
-        <Field label="הערה" value={note} onChangeText={setNote} maxLength={500} multiline testID="add-note" />
-        {!editing ? (
-          <View style={{ gap: space.xs }}>
-            <Button compact tone="secondary" icon="camera-outline" label={receiptUri ? 'החלפת הקבלה' : 'צילום קבלה'} onPress={captureReceipt} testID="add-receipt" />
-            {receiptUri ? <Image source={{ uri: receiptUri }} style={{ width: '100%', height: 140, borderRadius: radius.sm }} resizeMode="cover" testID="add-receipt-thumb" /> : null}
-          </View>
-        ) : null}
-        {mode === 'EXPENSE' && payment.method === 'CARD' ? (
-          <Card>
-            <Pressable onPress={() => setDcc((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: dcc }} testID="add-dcc">
-              <Row>
-                <Icon name={dcc ? 'checkbox-marked' : 'checkbox-blank-outline'} color={colors.primary} />
-                <AppText>חויבתי במטבע אחר</AppText>
-              </Row>
-            </Pressable>
-            <AppText variant="caption" color={colors.inkMuted}>
-              לפעמים בית העסק מציע לחייב בשקלים או בדולרים במקום במטבע המקומי (DCC). אם זה קרה — סמנו ורשמו מה הופיע בקבלה.
-            </AppText>
-            {dcc ? (
-              <View style={{ gap: space.xs }}>
-                <Row>
-                  <CurrencyButton code={chargedCurrency} onPress={() => setPicker('charged')} testID="charged-currency" />
-                  <AmountInput value={chargedText} onChange={setChargedText} placeholder="סכום (אם ידוע)" testID="charged-amount" />
-                </Row>
+            <MoneyEntry label="כמה יש בארנק בפועל" id="adjust" big autoFocus text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors ? counted.error : null} />
+            {diff ? (
+              <View style={styles.infoPanel} testID="adjust-diff">
+                <View style={styles.flex}>
+                  <Label>{diff.minor === 0 ? 'אין הפרש — לא יירשם תיקון' : 'ההפרש שיירשם'}</Label>
+                  {diff.minor !== 0 ? <AppText variant="heading">{formatMoney(diff, { signed: true })}</AppText> : null}
+                </View>
               </View>
             ) : null}
-          </Card>
+          </>
         ) : null}
-      </Collapsible>
+
+        <Row align="flex-start">
+          <DateField
+            label="תאריך"
+            value={date}
+            onChange={(d) => {
+              setDate(d);
+              setWhenTouched(true);
+            }}
+            testID="add-date"
+          />
+          <View style={styles.flex}>
+            <Field
+              label="שעה"
+              value={time}
+              onChangeText={(t) => {
+                setTime(t);
+                setWhenTouched(true);
+              }}
+              placeholder="HH:MM"
+              keyboardType="numbers-and-punctuation"
+              ltrInput
+              maxLength={5}
+              testID="add-time"
+            />
+          </View>
+        </Row>
+
+        <Collapsible title="פרטים נוספים (לא חובה)" testID="add-advanced">
+          {mode === 'EXPENSE' ? <Field label="תיאור" value={description} onChangeText={setDescription} maxLength={120} placeholder="למשל: ארוחת ערב" testID="add-description" /> : null}
+          <Field label="מקום / שם" value={place} onChangeText={setPlace} maxLength={120} placeholder="למשל: Sompong Seafood" testID="add-place" />
+          <Field label="הערה" value={note} onChangeText={setNote} maxLength={500} multiline testID="add-note" />
+          {!editing ? (
+            <View style={{ gap: space.xs }}>
+              <Button compact tone="soft" icon="camera-outline" label={receiptUri ? 'החלפת הקבלה' : 'הוספת קבלה (צילום)'} onPress={captureReceipt} testID="add-receipt" />
+              {receiptUri ? <Image source={{ uri: receiptUri }} style={{ width: '100%', height: 140, borderRadius: radius.sm }} resizeMode="cover" testID="add-receipt-thumb" /> : null}
+            </View>
+          ) : null}
+          {mode === 'EXPENSE' && payment.method === 'CARD' ? (
+            <View style={styles.infoPanel}>
+              <View style={styles.flex}>
+                <Pressable onPress={() => setDcc((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: dcc }} testID="add-dcc">
+                  <Row>
+                    <Icon name={dcc ? 'checkbox-marked' : 'checkbox-blank-outline'} color={colors.primary} />
+                    <AppText>חויבתי במטבע אחר</AppText>
+                  </Row>
+                </Pressable>
+                <AppText variant="caption" color={colors.inkMuted}>
+                  לפעמים בית העסק מציע לחייב בשקלים או בדולרים במקום במטבע המקומי (DCC). אם זה קרה — סמנו ורשמו מה הופיע בקבלה.
+                </AppText>
+                {dcc ? (
+                  <Row style={{ marginTop: space.xs }}>
+                    <CurrencyButton code={chargedCurrency} onPress={() => setPicker('charged')} testID="charged-currency" />
+                    <AmountInput value={chargedText} onChange={setChargedText} placeholder="סכום (אם ידוע)" testID="charged-amount" />
+                  </Row>
+                ) : null}
+              </View>
+            </View>
+          ) : null}
+        </Collapsible>
+      </Card>
+
+      {equivalent ? (
+        <View style={styles.equivalent} testID="add-equivalent">
+          <Icon name="calculator-variant-outline" color={colors.primary} size={28} />
+          <View style={styles.flex}>
+            <Label>{`סה״כ ב-${reportingCurrency} (משוער)`}</Label>
+            <AppText variant="title">{formatMoney(equivalent.amount)}</AppText>
+          </View>
+          <View style={styles.equivalentRate}>
+            <Label>שער ייחוס</Label>
+            <AppText variant="label">{formatRate(equivalent.rate.from, equivalent.rate.to, equivalent.rate.rate)}</AppText>
+          </View>
+        </View>
+      ) : null}
 
       <View style={[styles.moreActions, editing && { display: 'none' }]}>
         {mode !== 'CASH_ADJUSTMENT' ? (
-          <Button compact tone="ghost" icon="scale-balance" label="פעולות נוספות: תיקון יתרת מזומן" onPress={() => { setMode('CASH_ADJUSTMENT'); setErrors([]); setShowErrors(false); }} testID="mode-CASH_ADJUSTMENT" />
+          <Button
+            compact
+            tone="ghost"
+            icon="scale-balance"
+            label="פעולות נוספות: תיקון יתרת מזומן"
+            onPress={() => {
+              setMode('CASH_ADJUSTMENT');
+              setErrors([]);
+              setShowErrors(false);
+            }}
+            testID="mode-CASH_ADJUSTMENT"
+          />
         ) : (
           <Button compact tone="ghost" icon="arrow-left" label="חזרה להוספת הוצאה" onPress={() => setMode('EXPENSE')} testID="mode-back" />
         )}
@@ -451,12 +550,22 @@ export function AddActionScreen() {
 }
 
 const styles = StyleSheet.create({
-  segment: { flexDirection: 'row', backgroundColor: colors.surfaceMuted, borderRadius: radius.md, padding: 4, gap: 4 },
-  segmentItem: { flex: 1, minHeight: 40, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center' },
-  segmentSelected: { backgroundColor: colors.primary },
+  flex: { flex: 1 },
+  bold: { fontWeight: '700' },
+  headerSide: { width: 44 },
+  headerClose: { alignItems: 'flex-end', paddingTop: 2 },
+  headerTitles: { flex: 1, alignItems: 'center', gap: 2 },
+  modes: { flexDirection: 'row', gap: space.sm },
+  mode: { flex: 1, minHeight: 92, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', gap: space.xs, padding: space.xs },
+  modeSelected: { backgroundColor: colors.primarySoft, borderColor: colors.primary, borderWidth: 1.5 },
+  form: { gap: space.md },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm },
-  tile: { width: '31%', minHeight: 72, borderRadius: radius.md, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.line, alignItems: 'center', justifyContent: 'center', gap: 4, padding: space.xs },
-  tileSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  collapse: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 40 },
+  tile: { flexGrow: 0, flexBasis: '15%', minWidth: 64, minHeight: 72, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', gap: 4, paddingHorizontal: 2, paddingVertical: space.sm, borderWidth: 1.5, borderColor: 'transparent' },
+  tileWide: { flexBasis: '31%' },
+  tileSelected: { borderColor: colors.primary },
+  infoPanel: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.md, borderRadius: radius.md, backgroundColor: colors.surfaceMuted },
+  equivalent: { flexDirection: 'row', alignItems: 'center', gap: space.md, padding: space.lg, borderRadius: radius.md, backgroundColor: colors.primarySoft },
+  equivalentRate: { alignItems: 'flex-end', flexShrink: 1 },
+  collapse: { flexDirection: 'row', alignItems: 'center', gap: space.xs, minHeight: 44 },
   moreActions: { alignItems: 'flex-start' },
 });

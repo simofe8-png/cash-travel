@@ -3,9 +3,9 @@ import type { Category } from '../domain/expense';
 import { money } from '../domain/money';
 import { localTimeOf } from '../domain/time';
 import type { IconName } from './components/primitives';
-import { formatMoney } from './format';
+import { formatDateNumeric, formatMoney } from './format';
 import { categoryLabel, he } from './i18n/he';
-import { colors } from './theme/tokens';
+import { categoryColors, colors } from './theme/tokens';
 
 const CATEGORY_ICONS: Record<string, IconName> = {
   food: 'silverware-fork-knife',
@@ -26,6 +26,10 @@ export function categoryIcon(icon: string): IconName {
   return CATEGORY_ICONS[icon] ?? 'tag-outline';
 }
 
+export function categoryColor(icon: string): string {
+  return categoryColors[icon] ?? colors.primary;
+}
+
 export interface ActionPresentation {
   readonly title: string;
   readonly subtitle: string;
@@ -33,13 +37,16 @@ export interface ActionPresentation {
   readonly iconColor: string;
   readonly amountText: string;
   readonly amountColor: string;
+  /** Small line under the amount (the currency code), or null. */
+  readonly amountCaption: string | null;
 }
 
 /** How a transaction reads in lists: plain language, no accounting terms. */
-export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Category>): ActionPresentation {
+export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Category>, today?: string): ActionPresentation {
   const primary = money(r.amountMinor, r.currency);
   const time = localTimeOf({ occurredAt: r.occurredAt, occurredLocalDate: r.localDate, tzOffsetMin: r.tzOffsetMin });
-  const extras = [time, r.place].filter(Boolean) as string[];
+  const day = today === undefined ? null : r.localDate === today ? 'היום' : formatDateNumeric(r.localDate);
+  const extras = [day, time, r.place].filter(Boolean) as string[];
   switch (r.type) {
     case 'EXPENSE': {
       const cat = r.categoryId !== null ? categories.get(r.categoryId) : undefined;
@@ -48,9 +55,10 @@ export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Cat
         title: r.description || label,
         subtitle: [r.description ? label : null, r.paymentMethod === 'CARD' ? he.payment.CARD : he.payment.CASH, ...extras].filter(Boolean).join(' · '),
         icon: cat ? categoryIcon(cat.icon) : 'cash',
-        iconColor: r.paymentMethod === 'CARD' ? colors.card : colors.primary,
-        amountText: formatMoney(primary),
-        amountColor: colors.ink,
+        iconColor: cat ? categoryColor(cat.icon) : colors.primary,
+        amountText: formatMoney(primary, { outflow: true }),
+        amountColor: colors.danger,
+        amountCaption: r.currency,
       };
     }
     case 'FX_EXCHANGE':
@@ -59,8 +67,9 @@ export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Cat
         subtitle: extras.join(' · '),
         icon: 'swap-horizontal',
         iconColor: colors.fx,
-        amountText: `${formatMoney(primary)} ← ${formatMoney(money(r.counterAmountMinor ?? 0, r.counterCurrency ?? r.currency))}`,
+        amountText: `${formatMoney(primary)} → ${formatMoney(money(r.counterAmountMinor ?? 0, r.counterCurrency ?? r.currency))}`,
         amountColor: colors.ink,
+        amountCaption: null,
       };
     case 'ATM_WITHDRAWAL':
       return {
@@ -70,6 +79,7 @@ export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Cat
         iconColor: colors.atm,
         amountText: formatMoney(primary, { signed: true }),
         amountColor: colors.success,
+        amountCaption: r.currency,
       };
     case 'CASH_ADJUSTMENT':
       return {
@@ -79,6 +89,7 @@ export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Cat
         iconColor: colors.warning,
         amountText: formatMoney(primary, { signed: true }),
         amountColor: primary.minor < 0 ? colors.danger : colors.success,
+        amountCaption: r.currency,
       };
     case 'OPENING_BALANCE':
       return {
@@ -88,6 +99,7 @@ export function presentAction(r: JournalRow, categories: ReadonlyMap<number, Cat
         iconColor: colors.inkMuted,
         amountText: formatMoney(primary, { signed: true }),
         amountColor: colors.inkMuted,
+        amountCaption: r.currency,
       };
   }
 }

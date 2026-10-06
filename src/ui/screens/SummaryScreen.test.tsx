@@ -54,7 +54,7 @@ describe('Summary screen', () => {
     has('summary-card', r.card.amount);
     expect(r.totalTripCost.amount).toEqual(money(213700, 'ILS')); // 2000 + 85 + 30 + 22 fee = 2137.00
     expect(screen.getByTestId('summary-average')).toHaveTextContent(formatMoney(r.averagePerDay!.amount), { exact: false });
-    expect(screen.getByTestId('tile-atm-fees')).toHaveTextContent(/₪22\.00/);
+    expect(screen.getByTestId('tile-atm-fees')).toHaveTextContent(/₪22(?![.\d])/);
   });
 
   it('hides zero-spend categories and never shows budget/remaining language', async () => {

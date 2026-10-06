@@ -12,6 +12,7 @@ import type { PdfExporter } from '../application/ports/PdfExporter';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { ReceiptCamera, ReceiptStore } from '../application/ports/ReceiptStore';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
+import { IntegrityService } from '../application/integrity/IntegrityService';
 import { JournalService } from '../application/journal/JournalService';
 import { TripReportService } from '../application/report/TripReportService';
 import { ReceiptService } from '../application/receipts/ReceiptService';
@@ -24,6 +25,7 @@ import { SqliteCardRepository } from '../data/SqliteCardRepository';
 import { SqliteCardRuleRepository } from '../data/SqliteCardRuleRepository';
 import { SqliteCategoryRepository } from '../data/SqliteCategoryRepository';
 import { SqliteFxRateRepository } from '../data/SqliteFxRateRepository';
+import { SqliteIntegrityQueries } from '../data/SqliteIntegrityQueries';
 import { SqliteJournalQueries } from '../data/SqliteJournalQueries';
 import { SqliteLedgerRepository } from '../data/SqliteLedgerRepository';
 import { SqliteReceiptRepository } from '../data/SqliteReceiptRepository';
@@ -84,6 +86,7 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
     tripReportService: new TripReportService(tripService, reportingService, journalService, categoryService, cardService, platform.pdfExporter, clock),
     reportingService,
     transactionService,
+    integrityService: new IntegrityService(new SqliteIntegrityQueries(db), ledger),
     receiptService,
     appLockService: new AppLockService(trips, platform.deviceAuth),
   };

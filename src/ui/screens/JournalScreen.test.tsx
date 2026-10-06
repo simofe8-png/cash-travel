@@ -33,8 +33,8 @@ describe('Journal screen', () => {
     const { food, taxi, fx } = seed();
     await openApp('/journal');
     await waitFor(() => expect(screen.getByTestId('day-2026-11-03')).toBeTruthy());
-    expect(screen.getByTestId('day-total-2026-11-03')).toHaveTextContent(/฿200\.00/); // taxi only, FX excluded
-    expect(screen.getByTestId('day-total-2026-11-02')).toHaveTextContent(/฿100\.00/);
+    expect(screen.getByTestId('day-total-2026-11-03')).toHaveTextContent(/฿200(?![.\d])/); // taxi only, FX excluded
+    expect(screen.getByTestId('day-total-2026-11-02')).toHaveTextContent(/฿100(?![.\d])/);
     for (const id of [food, taxi, fx]) expect(screen.getByTestId(`action-${id}`)).toBeTruthy();
   });
 

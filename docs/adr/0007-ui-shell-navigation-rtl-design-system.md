@@ -44,3 +44,7 @@ derived data on change or focus. No state-management library; SQLite remains the
 `src/ui/navigation.test.tsx` (redirect without trip, tabs + "+" opens /add, all seven routes render). Physical A54
 (Expo Go): Trip Setup redirect renders RTL — right-anchored title, label/amount row mirrored, isolated `฿850.00`
 and red `-₪1,234.56`. `npx expo-doctor` 21/21.
+
+## Amendment (2026-10-06)
+The *Design system* section above is superseded by ADR-0010 (approved UI reference pack: white/blue visual system,
+travel-photo headers, flag emoji, numeric dates). Navigation, RTL and state decisions are unchanged.

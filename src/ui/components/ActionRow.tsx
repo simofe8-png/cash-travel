@@ -4,42 +4,51 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import type { JournalRow } from '../../application/ports/JournalQueries';
 import type { Category } from '../../domain/expense';
 import { presentAction } from '../present';
-import { colors, radius, space } from '../theme/tokens';
-import { AppText, Icon, Row } from './primitives';
+import { colors, space } from '../theme/tokens';
+import { AppText, Icon, IconTile, Row } from './primitives';
 
-/** One transaction in a list; opens Action Details. */
-export function ActionRow({ row, categories }: { row: JournalRow; categories: ReadonlyMap<number, Category> }) {
-  const p = presentAction(row, categories);
+/** One transaction in a list (approved row: icon tile, title/subtitle, amount + currency); opens Action Details. */
+export function ActionRow({ row, categories, today, last }: { row: JournalRow; categories: ReadonlyMap<number, Category>; today?: string; last?: boolean }) {
+  const p = presentAction(row, categories, today);
   return (
     <Pressable
       onPress={() => router.push(`/action/${row.id}`)}
       accessibilityRole="button"
       accessibilityLabel={`${p.title}, ${p.amountText}`}
       testID={`action-${row.id}`}
-      style={({ pressed }) => [styles.row, pressed && { opacity: 0.7 }]}>
-      <View style={[styles.icon, { backgroundColor: `${p.iconColor}1A` }]}>
-        <Icon name={p.icon} color={p.iconColor} size={20} />
-      </View>
+      style={({ pressed }) => [styles.row, !last && styles.divider, pressed && { opacity: 0.7 }]}>
+      <IconTile icon={p.icon} color={p.iconColor} />
       <View style={styles.text}>
-        <AppText numberOfLines={1}>{p.title}</AppText>
+        <AppText numberOfLines={1} style={styles.title}>
+          {p.title}
+        </AppText>
         {p.subtitle ? (
           <AppText variant="caption" color={colors.inkMuted} numberOfLines={1}>
             {p.subtitle}
           </AppText>
         ) : null}
       </View>
-      <Row gap={4}>
-        {row.hasReceipt ? <Icon name="paperclip" size={16} color={colors.inkFaint} /> : null}
-        <AppText variant="label" color={p.amountColor}>
-          {p.amountText}
-        </AppText>
-      </Row>
+      <View style={styles.amount}>
+        <Row gap={4}>
+          {row.hasReceipt ? <Icon name="paperclip" size={14} color={colors.inkFaint} /> : null}
+          <AppText variant="heading" color={p.amountColor}>
+            {p.amountText}
+          </AppText>
+        </Row>
+        {p.amountCaption ? (
+          <AppText variant="caption" color={colors.inkMuted}>
+            {p.amountCaption}
+          </AppText>
+        ) : null}
+      </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm, minHeight: 56, borderRadius: radius.sm },
-  icon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: space.sm + 2, minHeight: 64 },
+  divider: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.line },
   text: { flex: 1, gap: 2 },
+  title: { fontWeight: '600' },
+  amount: { alignItems: 'flex-end' },
 });

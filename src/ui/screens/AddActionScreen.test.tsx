@@ -78,7 +78,7 @@ describe('Add Action screen', () => {
   it('cash adjustment from a counted amount records only the difference', async () => {
     await openApp('/add?mode=CASH_ADJUSTMENT&currency=THB');
     await type('adjust-amount', '6,500');
-    expect(screen.getByTestId('adjust-diff')).toHaveTextContent(/-฿500\.00/);
+    expect(screen.getByTestId('adjust-diff')).toHaveTextContent(/-฿500(?![.\d])/);
     await press('add-save');
     await waitFor(() => expect(bal('THB')).toBe(650000));
     expect(mockServices.journalService.recent(tripId, 1)[0]).toMatchObject({ type: 'CASH_ADJUSTMENT', amountMinor: -50000 });

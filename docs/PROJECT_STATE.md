@@ -6,19 +6,22 @@ AUTONOMOUS END-TO-END.
 PASS is an internal quality gate. Claude does not ask the user for permission between normal Master Build Plan steps. After a verified PASS, Claude updates this file and immediately continues to the next numbered step.
 
 ## Current status
-Implementation in progress.
+Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 28: Migration & data-integrity hardening.
+`docs/MASTER_BUILD_PLAN.md` — Step 29: Full automated regression gate.
 
 ## Last completed build step
-Step 27 — Security & privacy hardening — PASS.
+Step 28 — Migration & data-integrity hardening — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
 
 ## Update protocol
 After every step, update this file with: last PASS step, evidence/commands actually run, important files/migrations, significant decisions/ADRs, unresolved risks, next step, Git/build checkpoint. Never mark a step PASS without evidence.
+
+## Note on this file
+The governance update of 2026-10-06 replaced this file with the planning-baseline template ("Implementation has NOT started"). That did not match the repository (Steps 1–27 committed, see `git log`), so the step log below was restored from the last committed checkpoint and the reconciliation recorded.
 
 ## Step log
 
@@ -152,3 +155,15 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Review: docs/security/REVIEW-2026-10-06.md (12 areas). Fixed: Android Auto Backup disabled (allowBackup=false); unused VIBRATE permission blocked. Accepted with rationale: exported launcher activity + prefill-only deep links; moderate decode-uri-component DoS (fix only in next SDK); no FLAG_SECURE.
 - Evidence: introspected manifest → permissions INTERNET, USE_BIOMETRIC, USE_FINGERPRINT; allowBackup=false. Greps: no http://, secrets, eval; console only one error-message warn; SQL fully parameterized. `npm run verify` → 324/324.
 - Follow-up: verify the final merged manifest (library manifests incl. CAMERA) on the RC build (Step 32).
+
+### Step 28 — Migration & data-integrity hardening — PASS (2026-10-06)
+- Implemented: pre-upgrade snapshot (`needsUpgrade` + `backupDatabase` = `VACUUM INTO`, never overwrites) taken by `openAppDatabase` before any pending migration; migration-runner support for SQLite table rebuilds (`rebuildsTables`: FKs off outside the transaction, `foreign_key_check` must be clean before commit, enforcement always restored); `IntegrityService` + `SqliteIntegrityQueries` (quick_check, FK check, ledger vs cashEffects, misplaced card charges, cross-trip entries). ADR-0003 amended.
+- Evidence: `src/data/db/upgrade.test.ts` (8 tests) on a populated v1 DB (every transaction type, edits, soft delete, card charge, receipt, FX cache): add-column + table-rebuild upgrades preserve every record and balance; failing upgrade rolls back completely; orphaning rebuild refused with FKs still on; snapshot is a complete openable copy; fresh DB takes no snapshot; FX cache rebuildable; tampering detected. `npm run verify` → lint 0, typecheck clean, 338/338 tests (35 suites).
+
+### Governance reconciliation — supervisor protocol + approved UI pack — PASS (2026-10-06)
+Trigger: the user added `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md`, `docs/ui/APPROVED_UI_SPEC.md` + 8 reference PNGs, and UI-gate rules in CLAUDE.md / START_CLAUDE.md / MASTER_BUILD_PLAN.md / PRODUCT_SPEC.md. The updated ARCHITECTURE / FINANCIAL_DOMAIN / SECURITY / README no longer carry the implementation notes appended in earlier steps; the user's versions are kept as-is (the same facts live in ADR-0001…0010 and docs/security/REVIEW-2026-10-06.md).
+- **Preserved (compliant):** all domain/financial engines, ledger, schema + migrations, repositories, services, FX/card/reporting semantics, receipts, PDF, app lock, offline behavior, seven-screen routing, RTL strategy, every behavioral test.
+- **Non-compliant → corrected:** the visual system of all seven screens did not follow the approved references (beige/teal notebook look, no travel-photo headers, no flags, ".00" amounts, verbal dates). Reworked to the reference composition with no behavior change: new tokens; `PhotoHeader` (bundled CC0 photo, docs/ui/ASSETS.md); `Flag` (emoji); reference-style rows, wallet cards, mode tiles, category/payment tiles, 2×2 detail grid, conversion card, receipt tiles, category bars, grouped settings; bottom nav per spec. Display-only: exact zero-fraction trimming, `dd.mm.yyyy` dates, reference equivalents via new `ReportingService.equivalent()` / domain `quoteRate` (cached rates, never on a save path). Dead `Placeholder.tsx` removed. PDF export shared by Settings and Summary (`useReportExport`). ADR-0010; ADR-0007 amended.
+- **Deliberate deviations (written spec beats old mockup content):** no budget/"remaining", no Duplicate action, no notifications/language/country rows, no card numbers/brand logos, no Summary recent list/balance card, no Journal currency strip — listed in ADR-0010.
+- **Evidence:** `npm run verify` → lint 0 warnings, typecheck clean, 338/338 tests (new: display-format/flag rules, exact `equivalent()` rate). Physical Galaxy A54 (Android 16, he-IL, user font scale 1.3) via Expo Go, live data, each screen compared with its reference: Home, Journal, Add Action (expense + ATM modes), Action Details, Summary, Settings, Trip Setup (edit). Deviations found on device and fixed: truncated labels at 1.3 font scale, oversized Settings photo, bidi order in the conversion line, duplicated subtitle.
+- **Git:** branch `main`, no remote; governance docs and reconciliation committed locally (see git log).

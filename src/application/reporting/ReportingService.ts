@@ -1,5 +1,6 @@
 import { summarizeSpending, totalOf, type CostItem, type Total, type TripSpending, type ValueBasis } from '../../domain/reporting';
-import { money, type Money } from '../../domain/money';
+import { quoteRate } from '../../domain/fx';
+import { money, type Decimal, type Money } from '../../domain/money';
 import { localDateOf } from '../../domain/time';
 import type { CardCostService } from '../cards/CardCostService';
 import type { FxRateService, RateNeed } from '../fx/FxRateService';
@@ -7,6 +8,15 @@ import type { Clock } from '../ports/Clock';
 import type { LedgerRepository } from '../ports/LedgerRepository';
 import type { CostRow, ReportingQueries } from '../ports/ReportingQueries';
 import type { TripRepository } from '../ports/TripRepository';
+
+/** One amount's reference-rate equivalent with the rate that produced it (display only). */
+export interface Equivalent {
+  readonly amount: Money;
+  readonly rate: { readonly from: string; readonly to: string; readonly rate: Decimal };
+  readonly rateDate: string;
+  readonly source: string;
+  readonly stale: boolean;
+}
 
 export interface WalletView {
   readonly currency: string;
@@ -53,6 +63,13 @@ export class ReportingService {
           currentInReporting: conv.status === 'OK' ? conv.amount : null,
         };
       });
+  }
+
+  /** Reference-rate equivalent of one amount on a date (cached rates only); null when no rate is known. */
+  equivalent(amount: Money, to: string, date: string): Equivalent | null {
+    const c = this.fx.convert(amount, to, date);
+    if (c.status !== 'OK') return null;
+    return { amount: c.amount, rate: { from: c.quote.from, to: c.quote.to, rate: quoteRate(c.quote) }, rateDate: c.quote.rateDate, source: c.quote.source, stale: c.quote.stale };
   }
 
   /** Approximate reporting-currency equivalent of a set of amounts on a date (e.g. opening cash). */

@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
-import { currencyInfo, SUPPORTED_CURRENCIES } from '../../domain/money';
+import { SUPPORTED_CURRENCIES } from '../../domain/money';
 import { addDays } from '../../domain/time';
-import { formatDate, formatDateShort, ltr } from '../format';
-import { colors, radius, space, touch } from '../theme/tokens';
+import { formatDate, formatDateNumeric, ltr } from '../format';
+import { colors, radius, space } from '../theme/tokens';
+import { Flag } from './Flag';
 import { AppText, Icon, Row } from './primitives';
 import { Sheet } from './Sheet';
 
@@ -33,7 +34,10 @@ export function CurrencyPicker(props: { visible: boolean; title?: string; select
           }}
           style={({ pressed }) => [styles.option, c.code === props.selected && styles.optionSelected, pressed && { opacity: 0.7 }]}>
           <Row justify="space-between">
-            <AppText>{c.nameHe}</AppText>
+            <Row>
+              <Flag currency={c.code} />
+              <AppText>{c.nameHe}</AppText>
+            </Row>
             <AppText variant="label" color={colors.inkMuted}>
               {ltr(`${c.code} ${c.symbol}`)}
             </AppText>
@@ -48,7 +52,8 @@ export function CurrencyPicker(props: { visible: boolean; title?: string; select
 export function CurrencyButton({ code, onPress, testID }: { code: string; onPress: () => void; testID?: string }) {
   return (
     <Pressable onPress={onPress} testID={testID} accessibilityRole="button" accessibilityLabel={`מטבע ${code}`} style={({ pressed }) => [styles.currencyBtn, pressed && { opacity: 0.7 }]}>
-      <AppText variant="heading">{ltr(`${currencyInfo(code).symbol} ${code}`)}</AppText>
+      <Flag currency={code} />
+      <AppText variant="heading">{code}</AppText>
       <Icon name="chevron-down" size={18} color={colors.inkMuted} />
     </Pressable>
   );
@@ -140,7 +145,7 @@ export function DateField(props: { label: string; value: string; min?: string; o
       </AppText>
       <Pressable onPress={() => setOpen(true)} testID={props.testID} accessibilityRole="button" accessibilityLabel={`${props.label}: ${formatDate(props.value)}`} style={styles.dateBtn}>
         <Icon name="calendar-month-outline" size={20} color={colors.inkMuted} />
-        <AppText numberOfLines={1}>{formatDateShort(props.value)}</AppText>
+        <AppText numberOfLines={1}>{formatDateNumeric(props.value)}</AppText>
       </Pressable>
       {open ? (
         <CalendarSheet
@@ -160,16 +165,16 @@ export function DateField(props: { label: string; value: string; min?: string; o
 }
 
 const styles = StyleSheet.create({
-  search: { minHeight: touch, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 16, color: colors.ink, textAlign: 'right' },
+  search: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 16, color: colors.ink, textAlign: 'right' },
   option: { paddingVertical: space.md, paddingHorizontal: space.sm, borderRadius: radius.sm },
   optionSelected: { backgroundColor: colors.primarySoft },
-  currencyBtn: { minHeight: touch, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.xs },
-  amount: { minHeight: touch, flex: 1, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 20, color: colors.ink, textAlign: 'left', writingDirection: 'ltr' },
+  currencyBtn: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  amount: { minHeight: 52, flex: 1, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, fontSize: 20, color: colors.ink, textAlign: 'left', writingDirection: 'ltr' },
   amountBig: { fontSize: 34, minHeight: 64, fontWeight: '600' },
   amountError: { borderColor: colors.danger },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: `${100 / 7}%`, height: 44, alignItems: 'center', justifyContent: 'center' },
   day: { borderRadius: 22 },
   daySelected: { backgroundColor: colors.primary },
-  dateBtn: { minHeight: touch, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  dateBtn: { minHeight: 52, borderRadius: radius.sm, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.surface, paddingHorizontal: space.md, flexDirection: 'row', alignItems: 'center', gap: space.sm },
 });

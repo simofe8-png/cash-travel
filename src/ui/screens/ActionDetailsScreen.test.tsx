@@ -43,9 +43,9 @@ describe('Action Details screen', () => {
   it('shows the adaptive details and change history', async () => {
     const { cash } = seed();
     await openApp(`/action/${cash}`);
-    expect(screen.getByTestId('details-amount')).toHaveTextContent(/฿850\.00/);
+    expect(screen.getByTestId('details-amount')).toHaveTextContent(/-฿850(?![.\d])/);
     expect(screen.getByText('Pad Thai')).toBeTruthy();
-    expect(screen.getByText('2 בנובמבר 2026 · 13:30')).toBeTruthy();
+    expect(screen.getByText('13:30')).toBeTruthy();
     expect(screen.getByTestId('details-history')).toHaveTextContent(/נוצר/);
   });
 
@@ -54,7 +54,7 @@ describe('Action Details screen', () => {
     const r = await openApp(`/action/${cash}`);
     await press('details-edit');
     await waitFor(() => expect(r.getPathname()).toBe('/add'));
-    expect(screen.getByTestId('expense-amount').props.value).toBe('850.00');
+    expect(screen.getByTestId('expense-amount').props.value).toBe('850');
     await type('expense-amount', '900');
     await press('add-save');
     await waitFor(() => expect(mockServices.ledger.get(cash)!.revision).toBe(2));
@@ -68,7 +68,7 @@ describe('Action Details screen', () => {
   it('records the actual card charge; reporting then prefers it', async () => {
     const { card } = seed();
     await openApp(`/action/${card}`);
-    expect(screen.getByTestId('charge-estimate')).toHaveTextContent(/₪500\.00/);
+    expect(screen.getByTestId('charge-estimate')).toHaveTextContent(/₪500(?![.\d])/);
     expect(screen.getByTestId('charge-estimate')).toHaveTextContent(/לא כולל עמלות/);
     await type('actual-amount', '512.40');
     await press('actual-save');
