@@ -46,8 +46,7 @@ const FEE_LABEL = (c: string) => (c === 'NO_FOREIGN_FEE' ? 'ללא עמלת מט
 function updateInfo(): string {
   if (!Updates.isEnabled) return 'מובנה (ללא עדכונים מרחוק)';
   const id = Updates.isEmbeddedLaunch || !Updates.updateId ? 'מובנה' : `עדכון ${ltr(Updates.updateId.slice(0, 8))}`;
-  // TEMPORARY OTA verification marker (ADR-0011 device proof) — removed by the next update.
-  return `${ltr(Updates.channel ?? '—')} · ${id} · runtime ${ltr((Updates.runtimeVersion ?? '').slice(0, 8))} · סימון בדיקת OTA`;
+  return `${ltr(Updates.channel ?? '—')} · ${id} · runtime ${ltr((Updates.runtimeVersion ?? '').slice(0, 8))}`;
 }
 
 const ISSUER_COLOR: Record<string, string> = { ISRACARD: '#1E5BB8', MAX: '#E4007C', CAL: '#00A3E0', OTHER: '#5D6780' };
