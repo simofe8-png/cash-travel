@@ -7,8 +7,10 @@ const expoConfig = require('eslint-config-expo/flat');
 //   composition wires everything. Violations are lint errors.
 const platform = ['react', 'react-native', 'react-native-*', 'expo', 'expo-*', '@expo/*', 'node:*'];
 const layer = (name) => [`**/${name}`, `**/${name}/**`];
+// Tests (not shipped) may use Node built-ins and the src/testing harness.
 const restrict = (files, groups, message) => ({
   files,
+  ignores: ["**/*.test.ts", "**/*.test.tsx"],
   rules: { 'no-restricted-imports': ['error', { patterns: [{ group: groups, message }] }] },
 });
 

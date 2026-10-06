@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 4: SQLite foundation & migration framework.
+`docs/MASTER_BUILD_PLAN.md` — Step 5: Core database schema.
 
 ## Last completed build step
-Step 3 — Money & currency foundation — PASS.
+Step 4 — SQLite foundation & migration framework — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -36,3 +36,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 3 — Money & currency foundation — PASS (2026-10-06)
 - Implemented: src/domain/money/{currency,decimal,money}.ts — 36 ISO-4217 currencies with Hebrew names; safe-integer minor-unit Money; BigInt Decimal; strict parser; exact string formatting; single-rounding (half away from zero) conversion incl. cross-rate ratio; derived effective rate. ADR-0002.
 - Evidence: `npm run verify` → lint clean, typecheck clean, 55/55 tests (ILS/USD/EUR/THB/JPY/KRW/JOD). grep for parseFloat/toFixed/Math.round in src/domain → none. Verification level: automated.
+
+### Step 4 — SQLite foundation & migration framework — PASS (2026-10-06)
+- Implemented: expo-sqlite (~57.0.3, config plugin) adapter `src/infrastructure/sqlite/ExpoSqliteDatabase.ts`; test adapter `src/testing/NodeSqliteDatabase.ts` (node:sqlite); `src/data/db/transaction.ts` (BEGIN IMMEDIATE/COMMIT, nested savepoints, rejects async callbacks); `src/data/db/migrate.ts` (ordered 1..N, one atomic transaction per migration incl. PRAGMA user_version + schema_migrations row, downgrade refusal, FK on + foreign_key_check); composition `openAppDatabase()` (WAL).
+- Evidence: `npm run verify` → 67/67 tests incl. 12 SQLite integration tests: clean install, repeat startup on a reopened file DB, upgrade from earlier schema with data preserved, failing migration fully rolled back then fixed upgrade succeeds, downgrade refused, FK enforced, all-or-nothing transaction rollback (FK failure and thrown error), nested savepoints. Physical device (A54, Expo Go): two cold starts show `db ok: schema 0->0, fk=1`.
+- Decision: Metro must not run with CI=1 during device work (disables file watching → stale bundle).
