@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 32: Release candidate build.
+`docs/MASTER_BUILD_PLAN.md` — Step 33: Final V1 handoff.
 
 ## Last completed build step
-Step 31 — Release-readiness audit — PASS.
+Step 32 — Release candidate build — PASS (debug-signed RC; production signing is an owner credential).
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -200,4 +200,11 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 - Fixed: launcher/adaptive/monochrome/favicon icons were still the Expo template art → generated Cash Travel icon (blue tile, suitcase + coin; SVG rendered with sharp run from the session scratchpad, not a project dependency); adaptive background #1565F0; explicit `android.versionCode: 1`.
 - Evidence: scope grep clean; 7 screen routes; `npx expo-doctor` 21/21; `npm ls` clean; `npm audit --omit=dev` 63 advisories, all build/test tooling except accepted runtime decode-uri-component; `npx expo config` resolves versionCode 1 / new background.
 - Noted for Step 35: `assets/splash-icon.png` is referenced nowhere (template leftover).
+
+### Step 32 — Release candidate build — PASS (2026-10-06)
+- Source revision: `a65917d5146d10c68febad10b393b9639075300f` (Step 31 commit; working tree clean apart from the new build doc). Built from the ASCII mirror `C:ctb` per `docs/release/LOCAL_BUILD.md`: `expo prebuild --platform android --no-install` → `gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a` → BUILD SUCCESSFUL in 1 h 18 m.
+- Artifact: `app-release.apk` 46,512,900 bytes, SHA-256 `23910c388f845dbf751f265247549eeb8109805b443b802fb59d719ffc26e1a3`; package com.cashtravel.app, versionCode 1, versionName 1.0.0, compile/target SDK 36, native code arm64-v8a. Signed with the template debug key (installation testing only).
+- Merged manifest (aapt2): permissions INTERNET, USE_BIOMETRIC, USE_FINGERPRINT, CAMERA (image picker, requested at runtime) + the platform's non-exported dynamic-receiver permission; allowBackup=false; only MainActivity exported; all providers/crop activities exported=false; expo-updates disabled.
+- Device (A54): fresh install → native RTL first-run Trip Setup with the new icon/visual system; trip "RC" + opening ฿1,000 + ฿250 cash expense → ฿750, live ECB rate (≈ ₪22.70); `adb install -r` upgrade-in-place (lastUpdateTime changed) → data intact after relaunch.
+- Not done (owner gate): production signing/upload keystore and store publication.
 
