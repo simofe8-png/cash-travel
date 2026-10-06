@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 2: Architecture skeleton.
+`docs/MASTER_BUILD_PLAN.md` — Step 3: Money & currency foundation.
 
 ## Last completed build step
-Step 1 — Bootstrap & governance — PASS.
+Step 2 — Architecture skeleton — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -27,3 +27,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Evidence: `npm run lint` → 0 problems; `npm run typecheck` → clean; `npm test` → 1/1 pass. Baseline app bundled by Metro (708 modules) and rendered on the physical Galaxy A54 (Android 16) in Expo Go 57.0.9 — screenshot inspected (static template screen). Verification level: automated + physical device (Expo Go).
 - Decisions: template LICENSE/AGENTS.md/.claude not imported (CLAUDE.md governs). Native builds require an ASCII-path copy (documented in ENVIRONMENT.md, proven on this machine by a sibling project).
 - Risks: low free disk (~7.5 GB) for the later native release build.
+
+### Step 2 — Architecture skeleton — PASS (2026-10-06)
+- Implemented: src/{domain,application(+ports),data,infrastructure,ui,composition}; synchronous `SqlDatabase` port; ESLint layer-boundary rules; ADR-0001.
+- Evidence: violation probes (domain→react, domain→data, ui→infrastructure, ui→expo-sqlite) produced 4 `no-restricted-imports` errors; probes deleted; `npm run lint` clean; `npm run typecheck` clean. Verification level: static/automated.
+- Decision: node:sqlite for tests (zero added deps), sync SQL port (ADR-0001).

@@ -36,3 +36,6 @@ UI state may cache derived data for responsiveness, but caches are rebuildable a
 
 ## RTL and locale
 RTL is designed from first implementation. Mixed Hebrew/Latin, currency symbols, numbers, dates, icons, back navigation and inputs must be verified. Time persistence uses a consistent canonical representation; trip date-only boundaries are handled deterministically.
+
+## Implementation layout (Step 2)
+See ADR-0001. `src/domain` (pure engines) ← `src/application` (use-cases + ports) ← `src/data` (SQLite repositories) / `src/infrastructure` (platform adapters) ← `src/composition` (wiring). `src/ui` and `src/app` (routes) call application use-cases only. Direction is enforced by ESLint `no-restricted-imports`.
