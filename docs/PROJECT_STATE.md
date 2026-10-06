@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 31: Release-readiness audit.
+`docs/MASTER_BUILD_PLAN.md` — Step 32: Release candidate build.
 
 ## Last completed build step
-Step 30 — Android physical-device acceptance QA — PASS (one owner-only check pending, see step log).
+Step 31 — Release-readiness audit — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -194,4 +194,10 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 | Optional app lock | device has no screen lock → correct explanation, switch stays off |
 - Defects: none in the app. (One operator input error during editing — text inserted before the old value — was corrected through the same edit flow; it exercised edit + history.)
 - **Owner-only pending check:** positive biometric/PIN unlock on a phone with a configured screen lock. The test phone is the owner's personal device without a secure lock; Claude does not change its security settings. The positive path is covered by automated AppLockService/LockGate tests (enable requires auth, relock after 60 s, failed auth keeps lock).
+
+### Step 31 — Release-readiness audit — PASS (2026-10-06)
+- Checklist and known limitations: `docs/release/READINESS-V1.md` (scope, excluded features, permissions, security, dependencies, migrations, versioning, build config, assets, docs).
+- Fixed: launcher/adaptive/monochrome/favicon icons were still the Expo template art → generated Cash Travel icon (blue tile, suitcase + coin; SVG rendered with sharp run from the session scratchpad, not a project dependency); adaptive background #1565F0; explicit `android.versionCode: 1`.
+- Evidence: scope grep clean; 7 screen routes; `npx expo-doctor` 21/21; `npm ls` clean; `npm audit --omit=dev` 63 advisories, all build/test tooling except accepted runtime decode-uri-component; `npx expo config` resolves versionCode 1 / new background.
+- Noted for Step 35: `assets/splash-icon.png` is referenced nowhere (template leftover).
 
