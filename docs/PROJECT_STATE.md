@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 15: App design system & RTL shell.
+`docs/MASTER_BUILD_PLAN.md` — Step 16: Screen 1 — Trip Setup.
 
 ## Last completed build step
-Step 14 — Reporting Engine — PASS.
+Step 15 — App design system & RTL shell — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -89,3 +89,9 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 14 — Reporting Engine — PASS (2026-10-06)
 - Implemented: src/domain/reporting (CostItem/Total/TripSpending, summarizeSpending, exact average); ReportingQueries port + SqliteReportingQueries (SQL-aggregated cost rows, activity currencies); ReportingService (spending, wallets, approximateEquivalent, rateNeeds). ADR-0006.
 - Evidence: `npm run verify` → 239/239. Scenario covers pre/during/post-trip, today, average/day (partial), categories (zero hidden, unavailable visible), cash vs card, actual>estimate, derived estimate after late rates without mutation, reporting-currency change with byte-identical financial tables, wallet negatives, no budget fields.
+
+### Step 15 — App design system & RTL shell — PASS (2026-10-06)
+- Implemented: Expo Router shell (src/app), tokens + components, Hebrew strings, LTR-isolated money/date formatting, AppProvider/useQuery, shared composition `createServices` (app + tests), device container, startup error screen, placeholder screens. ADR-0007.
+- Evidence: `npm run verify` → 247/247 (incl. 8 navigation tests). `npx expo-doctor` 21/21. Physical A54 / Expo Go: redirect to Trip Setup and RTL rendering inspected via screenshot (before fix: LTR because Expo Go isRTL=false; after root direction: correct RTL).
+- Issues fixed: react-dom 19.3 peer conflict (overrides pin), missing expo-asset/expo-font native peers, RNTL 14 async render vs renderRouter, intermittent cold-render timeout.
+- Note: the tab bar itself is verified by automated test here; on-device tab verification happens in Step 16 once a trip can be created through the real UI.

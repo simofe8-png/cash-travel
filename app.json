@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "cashtravel",
-    "slug": "cashtravel",
+    "name": "Cash Travel",
+    "slug": "cash-travel",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -11,18 +11,33 @@
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#0F5E57",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.cashtravel.app"
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-sqlite"
-    ]
+      "expo-sqlite",
+      "expo-router",
+      [
+        "expo-localization",
+        {
+          "supportsRTL": true,
+          "forcesRTL": true
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ],
+    "scheme": "cashtravel",
+    "experiments": {
+      "typedRoutes": false
+    }
   }
 }
