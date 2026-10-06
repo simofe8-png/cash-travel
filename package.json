@@ -18,6 +18,7 @@
     "expo-sharing": "~57.0.22",
     "expo-sqlite": "~57.0.3",
     "expo-status-bar": "~57.0.1",
+    "expo-updates": "~57.0.25",
     "react": "19.2.3",
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
@@ -41,7 +42,8 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "verify": "npm run lint && npm run typecheck && npm test -- --ci",
-    "test:live": "jest --testPathIgnorePatterns=/node_modules/ --testPathPattern=live.test"
+    "test:live": "jest --testPathIgnorePatterns=/node_modules/ --testPathPattern=live.test",
+    "update:testing": "node scripts/eas-update-testing.js"
   },
   "private": true,
   "overrides": {

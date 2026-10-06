@@ -1,0 +1,14 @@
+{
+  "cli": { "version": ">= 16.0.0", "appVersionSource": "local" },
+  "build": {
+    "testing": {
+      "channel": "testing",
+      "distribution": "internal",
+      "env": { "CT_UPDATES_CHANNEL": "testing" },
+      "android": { "buildType": "apk" }
+    },
+    "production": {
+      "channel": "production"
+    }
+  }
+}

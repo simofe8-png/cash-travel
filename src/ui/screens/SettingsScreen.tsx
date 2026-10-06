@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
+import * as Updates from 'expo-updates';
 import { useState, type ReactNode } from 'react';
 import { Alert, Image, Pressable, StyleSheet, Switch, View } from 'react-native';
 
@@ -40,6 +41,13 @@ function SettingsRow({ icon, title, subtitle, onPress, testID, trailing, value, 
 }
 
 const FEE_LABEL = (c: string) => (c === 'NO_FOREIGN_FEE' ? 'ללא עמלת מט״ח' : c.startsWith('FEE_PERCENT:') ? `עמלה ${ltr(`${c.slice(12)}%`)}` : 'עמלה לא ידועה');
+
+/** Which JS bundle is running (embedded vs. an OTA update) — traceable to the EAS update / Git commit. */
+function updateInfo(): string {
+  if (!Updates.isEnabled) return 'מובנה (ללא עדכונים מרחוק)';
+  const id = Updates.isEmbeddedLaunch || !Updates.updateId ? 'מובנה' : `עדכון ${ltr(Updates.updateId.slice(0, 8))}`;
+  return `${ltr(Updates.channel ?? '—')} · ${id} · runtime ${ltr((Updates.runtimeVersion ?? '').slice(0, 8))}`;
+}
 
 const ISSUER_COLOR: Record<string, string> = { ISRACARD: '#1E5BB8', MAX: '#E4007C', CAL: '#00A3E0', OTHER: '#5D6780' };
 
@@ -173,7 +181,8 @@ export function SettingsScreen() {
       <Card>
         <SectionTitle title="אודות" icon="information-outline" />
         <SettingsRow icon="shield-lock-outline" title="הנתונים נשמרים רק במכשיר" subtitle="אין חשבון ואין גיבוי לענן. שערי מטבע נטענים מהרשת בלי לשלוח את הנתונים שלך." />
-        <SettingsRow icon="tag-outline" title="גרסה" value={ltr(Constants.expoConfig?.version ?? '1.0.0')} last />
+        <SettingsRow icon="tag-outline" title="גרסה" value={ltr(Constants.expoConfig?.version ?? '1.0.0')} />
+        <SettingsRow icon="cloud-sync-outline" title="עדכון" subtitle={updateInfo()} testID="settings-update" last />
       </Card>
 
       <CurrencyPicker visible={currencyOpen} title="מטבע לדיווח" selected={trip.reportingCurrency} suggested={['ILS', 'USD', 'EUR']} onClose={() => setCurrencyOpen(false)} onSelect={changeReporting} />
