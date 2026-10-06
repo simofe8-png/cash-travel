@@ -14,3 +14,21 @@ This repository is governed by `CLAUDE.md` and the documents under `docs/`.
 9. `docs/adr/` — long-lived technical decisions.
 
 If documents conflict, do not guess or silently reinterpret product/financial semantics. Resolve conflicts autonomously when the authoritative precedence is clear; stop only when the conflict requires a product/security/scope decision outside the approved baseline.
+
+## V1 status (2026-10-06)
+V1 is implemented and verified through Master Build Plan Step 32 (see `docs/PROJECT_STATE.md` for the evidence log).
+Further references:
+- `docs/ui/APPROVED_UI_SPEC.md` + `docs/ui/references/` — approved visual contract; `docs/ui/ASSETS.md` — bundled asset provenance.
+- `docs/ENVIRONMENT.md` — toolchain, commands, device workflow.
+- `docs/release/READINESS-V1.md` — release checklist, known limitations, accepted risks.
+- `docs/release/LOCAL_BUILD.md` — reproducible Android release-candidate build (ASCII-path procedure).
+- `docs/security/REVIEW-2026-10-06.md` — security/privacy review.
+- `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md` — supervision and verification protocol.
+
+## Quick start
+```bash
+npm install
+npm run verify          # lint + typecheck + all tests (financial, SQLite, use-case, UI)
+npm run test:live       # optional: contract test against the real FX endpoints (network)
+npx expo start          # run in Expo Go (Android)
+```

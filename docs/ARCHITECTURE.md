@@ -36,3 +36,9 @@ UI state may cache derived data for responsiveness, but caches are rebuildable a
 
 ## RTL and locale
 RTL is designed from first implementation. Mixed Hebrew/Latin, currency symbols, numbers, dates, icons, back navigation and inputs must be verified. Time persistence uses a consistent canonical representation; trip date-only boundaries are handled deterministically.
+
+## V1 implementation map
+- Layers (ADR-0001, lint-enforced): `src/domain` (pure engines: money, ledger rules, FX, ATM, card cost, reporting, trip/time) ← `src/application` (use-case services + ports) ← `src/data` (SQLite repositories, migrations) / `src/infrastructure` (Expo adapters: SQLite, FX HTTP providers, receipt files/camera, device auth, PDF) ← `src/composition` (`createServices`, app container, DB open/upgrade). `src/ui` + `src/app` (Expo Router routes) call application services only.
+- Ledger: `SqliteLedgerRepository` is the sole writer of financial tables (architecture test); balances are derived by SQL from active entries.
+- Schema/migrations: ADR-0003 (incl. pre-upgrade snapshot, table-rebuild support, integrity check). FX: ADR-0004. Card cost: ADR-0005. Reporting: ADR-0006. UI shell/RTL: ADR-0007; visual system: ADR-0010. Receipts: ADR-0008. PDF: ADR-0009.
+- Network is used only for background reference-rate refresh (`useRateRefresh`), never on a save path.

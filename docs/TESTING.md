@@ -24,3 +24,6 @@ At designated milestones verify RTL, keyboard/input, navigation, camera receipt 
 
 ## PASS standard
 A step is PASS only when its specified checks actually ran successfully. Report exact verification level: static, automated, emulator, physical device, release.
+
+## V1 suites (where to look)
+Domain engines `src/domain/**/*.test.ts`; SQLite repositories, migrations and upgrades `src/data/**/*.test.ts` (incl. `upgrade.test.ts`); use cases and offline/lifecycle `src/application/**/*.test.ts`; regression matrix `src/regression.test.ts`; architecture guards `src/architecture.test.ts`; UI/navigation `src/ui/**/*.test.tsx` (React Native Testing Library over Expo Router); live FX contract `*.live.test.ts` (`npm run test:live`, excluded from CI). Device QA evidence is recorded per step in `docs/PROJECT_STATE.md`.

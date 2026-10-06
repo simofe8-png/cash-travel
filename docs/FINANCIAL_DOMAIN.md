@@ -66,3 +66,9 @@ Financial edits are atomic and preserve change history. Delete is soft delete. D
 - Reporting-currency change never mutates original financial records.
 - Soft-deleted transaction contributes zero to active financial state/reporting.
 - Current cash is derivable from active ledger entries at all times.
+
+## V1 implementation notes
+- Every transaction stores `occurred_at` (UTC), `occurred_local_date` and the device offset at entry; day grouping and "today" use local dates, so a timezone change never regroups history. Trip boundaries are inclusive dates.
+- Opening balances are `OPENING_BALANCE` ledger transactions (one active per currency per trip); editing them revises the ledger with history.
+- Money: integer minor units (ISO-4217 exponents), BigInt decimals for rates, one half-away-from-zero rounding at the target minor unit (ADR-0002). Display trims an all-zero fraction only (ADR-0010).
+- The invariant matrix is exercised end to end by `src/regression.test.ts`.

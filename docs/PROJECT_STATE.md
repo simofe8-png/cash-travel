@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 33: Final V1 handoff.
+`docs/MASTER_BUILD_PLAN.md` — Step 34: Lean Architecture Audit.
 
 ## Last completed build step
-Step 32 — Release candidate build — PASS (debug-signed RC; production signing is an owner credential).
+Step 33 — Final V1 handoff — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -207,4 +207,13 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 - Merged manifest (aapt2): permissions INTERNET, USE_BIOMETRIC, USE_FINGERPRINT, CAMERA (image picker, requested at runtime) + the platform's non-exported dynamic-receiver permission; allowBackup=false; only MainActivity exported; all providers/crop activities exported=false; expo-updates disabled.
 - Device (A54): fresh install → native RTL first-run Trip Setup with the new icon/visual system; trip "RC" + opening ฿1,000 + ฿250 cash expense → ฿750, live ECB rate (≈ ₪22.70); `adb install -r` upgrade-in-place (lastUpdateTime changed) → data intact after relaunch.
 - Not done (owner gate): production signing/upload keystore and store publication.
+
+### Step 33 — Final V1 handoff — PASS (2026-10-06)
+- Updated: README (V1 status, document map, quick start), ARCHITECTURE (implementation map), FINANCIAL_DOMAIN (implementation notes), SECURITY (implementation status + release manifest), TESTING (where each suite lives), ADR index (0001–0010). Known limitations and accepted risks: `docs/release/READINESS-V1.md`. Operations: `docs/ENVIRONMENT.md` (dev/device) and `docs/release/LOCAL_BUILD.md` (RC build). The user's governance text in these documents is unchanged; only sections were appended.
+- Recovery check: a new session following CLAUDE.md's reading order reaches this file, whose step log records every decision, command and evidence; no chat history is needed.
+- V1 checkpoint: the final Step 35 commit, tagged `v1.0.0` locally (not pushed).
+
+## Owner-only items (not blockers for V1 completion)
+1. Positive app-lock unlock on a phone with a configured screen lock (automated tests cover it).
+2. Production signing keystore and any store publication.
 

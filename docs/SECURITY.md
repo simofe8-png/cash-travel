@@ -26,3 +26,6 @@ Never casually log complete financial histories, sensitive card-related data, pr
 
 ## Review areas
 Review against relevant mobile security practices: local data exposure, backup/export behavior, file permissions, temporary files, intent/deep-link handling, dependency risk, exported components, secrets/configuration, receipt lifecycle, PDF lifecycle.
+
+## V1 implementation status
+See `docs/security/REVIEW-2026-10-06.md`. Release manifest (Step 32): INTERNET, USE_BIOMETRIC, USE_FINGERPRINT, runtime CAMERA; storage/media/location/audio/overlay/vibrate blocked; `allowBackup=false`; only the launcher activity exported. DB, receipts and report PDFs are app-private; PDFs leave only through the user's share/save choice and are deleted at the next export or app start. No secrets exist in the repository; production signing keys are owner-held and never committed.
