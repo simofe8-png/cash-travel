@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 22: Screen 7 — Settings & trip/card configuration.
+`docs/MASTER_BUILD_PLAN.md` — Step 23: Receipt camera & private-file lifecycle.
 
 ## Last completed build step
-Step 21 — Screen 6 — Summary — PASS.
+Step 22 — Screen 7 — Settings & trip/card configuration — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -124,3 +124,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 21 — Screen 6: Summary — PASS (2026-10-06)
 - Implemented: SummaryScreen — total trip cost, during trip, today, average/day (only once the trip started; partial flag), pre/post-trip when present, category tiles (zero-spend hidden, largest first) → `/journal?category=`, ATM-fees tile, cash vs credit bar; all values from ReportingService; no budget concept.
 - Evidence: `npm run verify` → 287/287 incl. 4 Summary UI tests (every figure equals ReportingService output; zero-spend tiles hidden; no budget/remaining text in the rendered tree; tile → filtered Journal; empty state, no average before trip). Physical A54: total ₪842.82 = ₪77.25 + ₪765.57 (hand-checked).
+
+### Step 22 — Screen 7: Settings & trip/card configuration — PASS (2026-10-06)
+- Implemented: SettingsScreen (trip edit entry → Trip Setup, reporting-currency picker, new trip, card list + CardSheet [issuer, optional nickname, one fee classification UNKNOWN/NO_FOREIGN_FEE/FEE_PERCENT, billing currency, archive], CategoriesSheet [create/rename/icon, delete with reassignment to Other], privacy note). App lock and PDF entries are added by Steps 24/25.
+- Evidence: `npm run verify` → 293/293 incl. 6 Settings UI tests (card row has only identity columns; invalid fee % rejected; reporting-currency change leaves transactions identical; category delete reassigns via ledger; edit-trip entry; exactly seven screen routes). Physical A54: Isracard "no FX fee" card added through the sheet, listed RTL.
