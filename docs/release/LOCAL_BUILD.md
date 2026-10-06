@@ -24,6 +24,17 @@ robocopy $src C:\ctb /MIR /XD "$src\.git" "$src\.expo" "$src\android" "$src\ios"
 # 2. Generate the native project (CNG; /android is never committed)
 cd /c/ctb && npx expo prebuild --platform android --no-install
 
+# 2b. TEST (OTA) builds: run steps 2 and 3 with CT_UPDATES_CHANNEL=testing exported (ADR-0011), and raise the
+#     Gradle JVM limits in the generated android/gradle.properties — expo-updates' KSP step exhausts the template's
+#     512 MB metaspace:  org.gradle.jvmargs=-Xmx3072m -XX:MaxMetaspaceSize=1024m
+#     Keep ≥ 3 GB free disk; the build peaks at roughly 3 GB of intermediates.
+#     Runtime fingerprint: compute it from the clean, committed REPOSITORY (not the build mirror — on Windows the
+#     Gradle output written into node_modules/*/android/build is not excluded and would change the hash) and pass
+#     it to the build, exactly like EAS Build does:
+#       (repo)   CT_UPDATES_CHANNEL=testing npx expo-updates fingerprint:generate --platform android   → .hash
+#       (mirror) export EXPO_UPDATES_FINGERPRINT_OVERRIDE=<hash>
+#     After the build, `unzip -p app-release.apk assets/fingerprint` must print that hash.
+
 # 3. Release build (arm64 only for the device RC)
 export JAVA_HOME='C:\ak-jdk' ANDROID_HOME='C:\ak-sdk' ANDROID_SDK_ROOT='C:\ak-sdk' GRADLE_USER_HOME='C:\ak-gradle' NODE_ENV=production
 cd /c/ctb/android && ./gradlew assembleRelease -PreactNativeArchitectures=arm64-v8a --no-daemon
