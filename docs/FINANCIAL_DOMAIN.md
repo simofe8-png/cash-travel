@@ -66,8 +66,3 @@ Financial edits are atomic and preserve change history. Delete is soft delete. D
 - Reporting-currency change never mutates original financial records.
 - Soft-deleted transaction contributes zero to active financial state/reporting.
 - Current cash is derivable from active ledger entries at all times.
-
-## Implementation notes (Step 7)
-- Every transaction stores `occurred_at` (UTC instant) plus `occurred_local_date` and the device UTC offset at entry; day grouping and "today" use local dates, so a later timezone change never regroups history.
-- Trip boundaries are inclusive date-only values. Status: UPCOMING (today < start), CURRENT, COMPLETED (today > end). Trip day count = inclusive days between start and end; pre/post-trip expenses never extend it.
-- Opening balances are `OPENING_BALANCE` ledger transactions (at most one active per currency per trip), timestamped when entered. Changing them revises/soft-deletes/records ledger transactions with history. Editing trip name/dates/reporting currency never modifies any transaction.

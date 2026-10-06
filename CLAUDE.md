@@ -131,3 +131,17 @@ The final report must include:
 - Dependencies removed: unused packages removed, if any.
 - Final repository status: whether any known disposable artifacts remain.
 - Post-cleanup verification: exact checks run and their results.
+
+## APPROVED UI REFERENCES — MANDATORY
+Before implementing or materially changing UI, read `docs/ui/APPROVED_UI_SPEC.md` and inspect the corresponding PNG files under `docs/ui/references/`.
+
+These references are mandatory visual targets. Do not redesign, modernize, substitute, or invent a different visual system. Implement the approved composition faithfully with responsive native React Native components.
+
+Conflict precedence is strict:
+1. `CLAUDE.md` + current product/domain/architecture specifications define behavior and financial semantics.
+2. `docs/ui/APPROVED_UI_SPEC.md` resolves visual-reference usage and known later refinements.
+3. PNG references define approved visual composition/style.
+
+Therefore, preserve the approved look while never reintroducing obsolete mockup behavior such as Budget, extra navigation destinations, full card-number data requirements, GPS/maps, duplicate action, or other removed V1 features.
+
+A screen is not UI-PASS until it has been visually compared with its approved reference at a representative Android size and material deviations have been corrected.

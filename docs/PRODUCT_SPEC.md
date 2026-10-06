@@ -61,3 +61,6 @@ One professional trip-summary PDF. Android share/save UI lets the user choose Dr
 
 ## Explicitly out of V1
 Account/backend/cloud sync; GPS/maps; OCR/document management; budget; generic income; refunds; dedicated split-payment flow; favorite/template/recurring/duplicate actions; direct Drive integration; Excel/CSV export.
+
+## Approved visual specification
+The authoritative visual reference pack is `docs/ui/APPROVED_UI_SPEC.md` plus the PNGs under `docs/ui/references/`. Implement the seven approved screens using that visual language. Current written product/domain rules override obsolete content visible in older mockup pixels.

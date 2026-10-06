@@ -26,3 +26,6 @@ Do not stop merely to provide progress updates. Continue until all Master Build 
 Start now.
 
 Additional mandatory completion rule: after all functional implementation steps, execute the Lean Architecture Audit and Final Repository Hygiene & Clean Verification steps. Do not declare the project complete before both reach PASS. Continue autonomously through these steps under the same execution protocol.
+
+## Mandatory approved UI intake
+Before any UI implementation, read `docs/ui/APPROVED_UI_SPEC.md` and inspect every image in `docs/ui/references/`. Treat them as the approved visual target, subject to the conflict precedence defined there and in `CLAUDE.md`. Do not invent a replacement design.

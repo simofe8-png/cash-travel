@@ -168,3 +168,6 @@ Update README, architecture/domain/security/testing docs, ADR index, PROJECT_STA
 **PASS:** repository is clean; no known disposable development artifacts remain; all post-cleanup verification passes; final report contains Removed, Retained, Dependencies removed, Final repository status, and Post-cleanup verification.
 
 **Execution rule:** Steps 34 and 35 are normal autonomous steps. Do not stop for approval between them. A deletion becomes a hard stop only if evidence cannot establish that the target is disposable or it may affect user-owned/unrelated data.
+
+## Mandatory UI reference gate (applies to every UI-related step)
+Before implementing a screen, inspect `docs/ui/APPROVED_UI_SPEC.md` and its corresponding approved PNG in `docs/ui/references/`. A UI-related step cannot PASS until the implementation has been rendered on Android/emulator and materially compared against the approved reference for hierarchy, layout, RTL, spacing, controls and visual language. Current written product/domain rules override obsolete content visible in a mockup; the reference remains authoritative for the approved visual design.
