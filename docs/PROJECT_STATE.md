@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 18: Screen 3 — Add Action.
+`docs/MASTER_BUILD_PLAN.md` — Step 19: Screen 4 — Journal.
 
 ## Last completed build step
-Step 17 — Screen 2 — Home — PASS.
+Step 18 — Screen 3 — Add Action — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -103,5 +103,10 @@ After every step, update this file with: last PASS step, evidence/commands actua
 
 ### Step 17 — Screen 2: Home — PASS (2026-10-06)
 - Implemented: HomeScreen (trip header + day line, contextual trip-switcher sheet with "new trip", wallet cards opening/current/≈reporting, negative-wallet banner with FX/ATM/adjustment quick actions, today and trip totals with unavailable/estimated notes, recent actions), ActionRow + presentAction, JournalQueries/JournalService (list + limit only), background rate refresh.
-- Evidence: `npm run verify` → 264/264 incl. 4 Home UI tests asserting displayed values equal ReportingService/ledger outputs, negative banner + quick action → /add, trip switching, empty states. New architecture guards: UI/app never import money arithmetic or ledger/reporting computation (probe verified); no control characters in source. Physical A54: Home rendered with live-rate equivalents, RTL correct.
+- Evidence: `npm run verify` → 261/261 incl. 4 Home UI tests asserting displayed values equal ReportingService/ledger outputs, negative banner + quick action → /add, trip switching, empty states. New architecture guards: UI/app never import money arithmetic or ledger/reporting computation (probe verified); no control characters in source. Physical A54: Home rendered with live-rate equivalents, RTL correct.
 - Fix: a guard written through a shell `node -e` lost escapes (literal backspace chars) and passed vacuously; caught by probe, rewritten with the Write tool, plus a control-character guard.
+
+### Step 18 — Screen 3: Add Action — PASS (2026-10-06)
+- Implemented: AddActionScreen — Expense (big amount, category grid, Cash / configured cards / unspecified card, remembered defaults), FX (given/received with live derived rate), ATM (received + optional local fee + funding card), Cash Adjustment under "more actions" (counted cash → derived difference via ReconciliationService); advanced details: date (calendar) + time, description, place, note, DCC "charged in another currency" (+optional amount). Mode/currency deep-link params used by Home quick actions. TripService.nowOccurrence/offsetMinutes so UI never reads the device clock.
+- Evidence: `npm run verify` → 268/268 incl. 7 Add Action UI tests (minimal expense flow = amount → category → save; card+DCC; FX two legs + rate text; ATM fee; adjustment difference; validation saves nothing; chosen local time). Physical A54: 850 THB cash food + 400 USD cash shopping entered through the UI → THB ฿6,150, USD −$100 in red with banner + quick actions, today ₪1,302.17 (hand-checked 77.25 + 1,224.92).
+- Dev note: Fast Refresh keeps the composed services singleton; after changing service classes, cold-start Expo Go (seen as "undefined is not a function", gone after cold start). Not applicable to release builds.

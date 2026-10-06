@@ -1,3 +1,4 @@
+import type { Occurrence } from '../../domain/ledger';
 import { localDateOf, occurrence } from '../../domain/time';
 import { defaultTripId, tripStatus, validateTripDetails, type Trip, type TripDetails, type TripStatus, type TripViolation } from '../../domain/trip';
 import { isSupportedCurrency, type Money } from '../../domain/money';
@@ -30,6 +31,16 @@ export class TripService {
 
   today(): string {
     return localDateOf(this.clock.now(), this.clock.offsetMinutes());
+  }
+
+  /** Current moment as an Occurrence at the device offset (default "when" for new actions). */
+  nowOccurrence(): Occurrence {
+    return occurrence(this.clock.now(), this.clock.offsetMinutes());
+  }
+
+  /** Device UTC offset (minutes) used when the user picks a local date/time. */
+  offsetMinutes(): number {
+    return this.clock.offsetMinutes();
   }
 
   /** Creates a trip and its opening cash balances atomically, and makes it the current trip. */
