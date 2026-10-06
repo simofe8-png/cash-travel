@@ -8,6 +8,8 @@ import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import { BUNDLED_CARD_RULE_SET } from '../data/cardRules/bundledRuleSet';
 import { SqliteCardRuleRepository } from '../data/SqliteCardRuleRepository';
 import { SqliteFxRateRepository } from '../data/SqliteFxRateRepository';
+import { ReportingService } from '../application/reporting/ReportingService';
+import { SqliteReportingQueries } from '../data/SqliteReportingQueries';
 import { CategoryService } from '../application/expenses/CategoryService';
 import { ExpenseService } from '../application/expenses/ExpenseService';
 import { FxExchangeService } from '../application/fx/FxExchangeService';
@@ -39,5 +41,6 @@ export function testServices(providers: FxRateProvider[] = []) {
   const fxService = new FxExchangeService(ledger, uow, clock);
   const atmService = new AtmService(ledger, cards, uow, clock, cardCostService);
   const reconciliationService = new ReconciliationService(ledger, uow, clock);
-  return { db, clock, ledger, trips, categories, cards, uow, fxRates, fxRateService, cardRules, cardCostService, cardService, tripService, expenseService, categoryService, fxService, atmService, reconciliationService };
+  const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
+  return { reportingService, db, clock, ledger, trips, categories, cards, uow, fxRates, fxRateService, cardRules, cardCostService, cardService, tripService, expenseService, categoryService, fxService, atmService, reconciliationService };
 }

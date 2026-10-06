@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 14: Reporting Engine.
+`docs/MASTER_BUILD_PLAN.md` — Step 15: App design system & RTL shell.
 
 ## Last completed build step
-Step 13 — Card Cost Engine & rule model — PASS.
+Step 14 — Reporting Engine — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -85,3 +85,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Fix found by tests: FxRateService ignored cached rates from sources not configured as providers → now preference-ordered but inclusive.
 - Corrections: several hand-computed expectations replaced by exact BigInt-derived values.
 - Risk: no verified issuer fee defaults; documented; users can classify cards.
+
+### Step 14 — Reporting Engine — PASS (2026-10-06)
+- Implemented: src/domain/reporting (CostItem/Total/TripSpending, summarizeSpending, exact average); ReportingQueries port + SqliteReportingQueries (SQL-aggregated cost rows, activity currencies); ReportingService (spending, wallets, approximateEquivalent, rateNeeds). ADR-0006.
+- Evidence: `npm run verify` → 239/239. Scenario covers pre/during/post-trip, today, average/day (partial), categories (zero hidden, unavailable visible), cash vs card, actual>estimate, derived estimate after late rates without mutation, reporting-currency change with byte-identical financial tables, wallet negatives, no budget fields.
