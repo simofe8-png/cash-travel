@@ -24,4 +24,6 @@ export interface LedgerRepository {
   balances(tripId: number): WalletBalance[];
   /** Integrity audit: returns ids of active transactions whose active entries differ from their derived effects. */
   findInconsistencies(tripId: number): number[];
+  /** Change history of one transaction, oldest first. */
+  history(id: number): { action: 'CREATE' | 'EDIT' | 'DELETE' | 'ACTUAL_CHARGE'; revision: number; changedAt: string }[];
 }

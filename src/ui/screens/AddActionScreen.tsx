@@ -2,14 +2,14 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
-import type { ExpensePayment, TransactionType } from '../../domain/ledger';
+import type { ExpensePayment, Occurrence, StoredTransaction, TransactionType } from '../../domain/ledger';
 import { exchangeRateView } from '../../domain/fx';
 import { money, parseAmount, type Money } from '../../domain/money';
 import { localTimeOf, occurrenceAtLocal } from '../../domain/time';
 import { useApp, useQuery } from '../AppContext';
 import { AmountInput, CurrencyButton, CurrencyPicker, DateField } from '../components/pickers';
 import { AppText, Banner, Button, Card, Chip, Field, Icon, Row, Screen, SectionTitle } from '../components/primitives';
-import { formatMoney, formatRate } from '../format';
+import { formatMoney, formatRate, plainAmount } from '../format';
 import { categoryLabel, he } from '../i18n/he';
 import { categoryIcon } from '../present';
 import { colors, radius, space } from '../theme/tokens';
@@ -67,9 +67,76 @@ function Collapsible({ title, children, testID }: { title: string; children: Rea
   );
 }
 
+interface Prefill {
+  mode: Mode;
+  amountText: string;
+  currency: string;
+  categoryId: number | null;
+  payment: ExpensePayment | null;
+  description: string;
+  place: string;
+  note: string;
+  dcc: boolean;
+  chargedCurrency: string;
+  chargedText: string;
+  otherText: string;
+  otherCurrency: string | null;
+  feeText: string;
+  atmCard: number | null | undefined;
+  occurrence: Occurrence | null;
+}
+
+/** Form values for editing an existing action (Action Details → Edit). */
+function prefillFrom(tx: StoredTransaction | null): Prefill | null {
+  if (!tx || tx.draft.type === 'OPENING_BALANCE') return null;
+  const d = tx.draft;
+  const base: Prefill = {
+    mode: d.type,
+    amountText: '',
+    currency: 'ILS',
+    categoryId: null,
+    payment: null,
+    description: d.description ?? '',
+    place: d.place ?? '',
+    note: d.note ?? '',
+    dcc: false,
+    chargedCurrency: 'ILS',
+    chargedText: '',
+    otherText: '',
+    otherCurrency: null,
+    feeText: '',
+    atmCard: undefined,
+    occurrence: d,
+  };
+  switch (d.type) {
+    case 'EXPENSE': {
+      const cc = tx.cardCharge;
+      const dcc = !!cc && cc.chargedCurrency !== d.amount.currency;
+      return {
+        ...base,
+        amountText: plainAmount(d.amount),
+        currency: d.amount.currency,
+        categoryId: d.categoryId,
+        payment: d.payment,
+        dcc,
+        chargedCurrency: dcc ? cc!.chargedCurrency : 'ILS',
+        chargedText: dcc && cc!.chargedAmountMinor !== null ? plainAmount(money(cc!.chargedAmountMinor, cc!.chargedCurrency)) : '',
+      };
+    }
+    case 'FX_EXCHANGE':
+      return { ...base, amountText: plainAmount(d.given), currency: d.given.currency, otherText: plainAmount(d.received), otherCurrency: d.received.currency };
+    case 'ATM_WITHDRAWAL':
+      return { ...base, amountText: plainAmount(d.received), currency: d.received.currency, feeText: d.fee ? plainAmount(d.fee) : '', atmCard: d.cardId };
+    case 'CASH_ADJUSTMENT':
+      return { ...base, amountText: `${d.delta.minor < 0 ? '-' : ''}${plainAmount(d.delta)}`, currency: d.delta.currency };
+  }
+}
+
 export function AddActionScreen() {
   const { services, notifyChanged } = useApp();
-  const params = useLocalSearchParams<{ mode?: string; currency?: string }>();
+  const params = useLocalSearchParams<{ mode?: string; currency?: string; edit?: string }>();
+  const editId = params.edit ? Number(params.edit) : null;
+  const pre = useQuery((s) => (editId === null ? null : prefillFrom(s.transactionService.details(editId)?.tx ?? null)), [editId]);
   const ctx = useQuery((s) => {
     const trip = s.tripService.currentTrip();
     if (!trip) return null;
@@ -81,40 +148,43 @@ export function AddActionScreen() {
       wallets: s.reportingService.wallets(trip.id),
     };
   });
-  const initialMode = (['EXPENSE', 'FX_EXCHANGE', 'ATM_WITHDRAWAL', 'CASH_ADJUSTMENT'] as const).find((m) => m === params.mode) ?? 'EXPENSE';
+  const initialMode = pre?.mode ?? (['EXPENSE', 'FX_EXCHANGE', 'ATM_WITHDRAWAL', 'CASH_ADJUSTMENT'] as const).find((m) => m === params.mode) ?? 'EXPENSE';
   const [mode, setMode] = useState<Mode>(initialMode);
-  const startCurrency = params.currency ?? ctx?.defaults.currency ?? 'ILS';
+  const startCurrency = pre?.currency ?? params.currency ?? ctx?.defaults.currency ?? 'ILS';
 
   // Shared
-  const [amountText, setAmountText] = useState('');
+  const [amountText, setAmountText] = useState(pre?.amountText ?? '');
   const [currency, setCurrency] = useState(startCurrency);
   const [errors, setErrors] = useState<string[]>([]);
   const [showErrors, setShowErrors] = useState(false);
   const [picker, setPicker] = useState<null | 'main' | 'other' | 'charged'>(null);
   // Expense
-  const [categoryId, setCategoryId] = useState<number | null>(null);
-  const [payment, setPayment] = useState<ExpensePayment>(ctx?.defaults.payment ?? { method: 'CASH' });
-  const [description, setDescription] = useState('');
-  const [place, setPlace] = useState('');
-  const [note, setNote] = useState('');
-  const [dcc, setDcc] = useState(false);
-  const [chargedCurrency, setChargedCurrency] = useState('ILS');
-  const [chargedText, setChargedText] = useState('');
-  // When
-  const now = services.tripService.nowOccurrence();
+  const [categoryId, setCategoryId] = useState<number | null>(pre?.categoryId ?? null);
+  const [payment, setPayment] = useState<ExpensePayment>(pre?.payment ?? ctx?.defaults.payment ?? { method: 'CASH' });
+  const [description, setDescription] = useState(pre?.description ?? '');
+  const [place, setPlace] = useState(pre?.place ?? '');
+  const [note, setNote] = useState(pre?.note ?? '');
+  const [dcc, setDcc] = useState(pre?.dcc ?? false);
+  const [chargedCurrency, setChargedCurrency] = useState(pre?.chargedCurrency ?? 'ILS');
+  const [chargedText, setChargedText] = useState(pre?.chargedText ?? '');
+  // When (an edit keeps the original occurrence unless the user changes date/time)
+  const now = pre?.occurrence ?? services.tripService.nowOccurrence();
   const [date, setDate] = useState(now.occurredLocalDate);
   const [time, setTime] = useState(localTimeOf(now));
   const [whenTouched, setWhenTouched] = useState(false);
   // FX
-  const [otherText, setOtherText] = useState('');
-  const [otherCurrency, setOtherCurrency] = useState(ctx?.trip.reportingCurrency === startCurrency ? 'USD' : (ctx?.trip.reportingCurrency ?? 'ILS'));
+  const [otherText, setOtherText] = useState(pre?.otherText ?? '');
+  const [otherCurrency, setOtherCurrency] = useState(pre?.otherCurrency ?? (ctx?.trip.reportingCurrency === startCurrency ? 'USD' : (ctx?.trip.reportingCurrency ?? 'ILS')));
   // ATM
-  const [feeText, setFeeText] = useState('');
-  const [atmCard, setAtmCard] = useState<number | null>(ctx?.defaults.payment.method === 'CARD' ? ctx.defaults.payment.cardId : null);
+  const [feeText, setFeeText] = useState(pre?.feeText ?? '');
+  const [atmCard, setAtmCard] = useState<number | null>(pre?.atmCard !== undefined ? pre.atmCard : ctx?.defaults.payment.method === 'CARD' ? ctx.defaults.payment.cardId : null);
 
+  const editing = editId !== null && pre !== null;
   const main = readAmount(amountText, currency);
   const other = readAmount(otherText, otherCurrency);
   const counted = readAmount(amountText, currency, true);
+  const deltaParse = parseAmount(amountText, currency, { allowNegative: true });
+  const delta = deltaParse.ok && deltaParse.minor !== 0 ? money(deltaParse.minor, currency) : null;
   const diff = useMemo(
     () => (ctx && mode === 'CASH_ADJUSTMENT' && counted.value ? services.reconciliationService.difference(ctx.trip.id, counted.value) : null),
     [ctx, mode, counted.value, services],
@@ -126,7 +196,7 @@ export function AddActionScreen() {
   const tripId = ctx.trip.id;
 
   function when() {
-    if (!whenTouched) return undefined;
+    if (!whenTouched) return editing ? (pre.occurrence ?? undefined) : undefined;
     return occurrenceAtLocal(date, /^\d{2}:\d{2}$/.test(time) ? time : '12:00', services.tripService.offsetMinutes());
   }
 
@@ -144,19 +214,28 @@ export function AddActionScreen() {
           chargedIn = { currency: chargedCurrency, amountMinor: c.value?.minor ?? null };
         }
         if (errs.length) return setErrors(errs);
-        services.expenseService.addExpense({ tripId, amount: main.value!, categoryId: categoryId!, payment, occurrence: when(), description, place, note, chargedIn });
+        const input = { tripId, amount: main.value!, categoryId: categoryId!, payment, occurrence: when(), description, place, note, chargedIn };
+        if (editing) services.expenseService.editExpense(editId, input);
+        else services.expenseService.addExpense(input);
       } else if (mode === 'FX_EXCHANGE') {
         if (main.error) errs.push(`נתתי: ${main.error}`);
         if (other.error) errs.push(`קיבלתי: ${other.error}`);
         if (currency === otherCurrency) errs.push('בהמרה צריך שני מטבעות שונים');
         if (errs.length) return setErrors(errs);
-        services.fxService.exchange({ tripId, given: main.value!, received: other.value!, occurrence: when(), place, note });
+        const input = { tripId, given: main.value!, received: other.value!, occurrence: when(), place, note };
+        if (editing) services.fxService.editExchange(editId, input);
+        else services.fxService.exchange(input);
       } else if (mode === 'ATM_WITHDRAWAL') {
         if (main.error) errs.push(main.error);
         const fee = feeText.trim() ? readAmount(feeText, currency, true) : { value: null, error: null };
         if (fee.error) errs.push(`עמלה: ${fee.error}`);
         if (errs.length) return setErrors(errs);
-        services.atmService.withdraw({ tripId, received: main.value!, fee: fee.value, cardId: atmCard, occurrence: when(), place, note });
+        const input = { tripId, received: main.value!, fee: fee.value, cardId: atmCard, occurrence: when(), place, note };
+        if (editing) services.atmService.editWithdrawal(editId, input);
+        else services.atmService.withdraw(input);
+      } else if (editing) {
+        if (!delta) return setErrors(['נא להזין תיקון שונה מאפס (אפשר עם מינוס)']);
+        services.reconciliationService.editAdjustment(editId, { tripId, delta, note, occurrence: when() });
       } else {
         if (counted.error) errs.push(counted.error);
         if (errs.length) return setErrors(errs);
@@ -179,13 +258,13 @@ export function AddActionScreen() {
   return (
     <Screen testID="screen-addaction" footer={<Button label={he.common.save} icon="check" onPress={save} testID="add-save" />}>
       <Row justify="space-between">
-        <AppText variant="title">{mode === 'CASH_ADJUSTMENT' ? he.types.CASH_ADJUSTMENT : 'פעולה חדשה'}</AppText>
+        <AppText variant="title">{editing ? 'עריכת פעולה' : mode === 'CASH_ADJUSTMENT' ? he.types.CASH_ADJUSTMENT : 'פעולה חדשה'}</AppText>
         <Pressable onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} accessibilityRole="button" accessibilityLabel="סגירה" hitSlop={12} testID="add-close">
           <Icon name="close" color={colors.inkMuted} />
         </Pressable>
       </Row>
 
-      {mode !== 'CASH_ADJUSTMENT' ? (
+      {mode !== 'CASH_ADJUSTMENT' && !editing ? (
         <View style={styles.segment}>
           {MODES.map((m) => (
             <Pressable key={m} onPress={() => { setMode(m); setErrors([]); setShowErrors(false); }} accessibilityRole="tab" accessibilityState={{ selected: mode === m }} testID={`mode-${m}`} style={[styles.segmentItem, mode === m && styles.segmentSelected]}>
@@ -267,7 +346,11 @@ export function AddActionScreen() {
         </>
       ) : null}
 
-      {mode === 'CASH_ADJUSTMENT' ? (
+      {mode === 'CASH_ADJUSTMENT' && editing ? (
+        <MoneyEntry label="תיקון (חיובי = נמצא יותר מזומן, מינוס = חסר)" id="adjust-delta" big text={amountText} onText={setAmountText} currency={currency} onCurrency={() => setPicker('main')} error={showErrors && !delta ? 'נא להזין תיקון שונה מאפס' : null} />
+      ) : null}
+
+      {mode === 'CASH_ADJUSTMENT' && !editing ? (
         <>
           <AppText color={colors.inkMuted}>ספרו את המזומן בארנק והזינו כמה יש בפועל. האפליקציה תרשום את ההפרש כתיקון — היתרה תמיד מחושבת מהפעולות.</AppText>
           <Card>
@@ -325,7 +408,7 @@ export function AddActionScreen() {
         ) : null}
       </Collapsible>
 
-      <View style={styles.moreActions}>
+      <View style={[styles.moreActions, editing && { display: 'none' }]}>
         {mode !== 'CASH_ADJUSTMENT' ? (
           <Button compact tone="ghost" icon="scale-balance" label="פעולות נוספות: תיקון יתרת מזומן" onPress={() => { setMode('CASH_ADJUSTMENT'); setErrors([]); setShowErrors(false); }} testID="mode-CASH_ADJUSTMENT" />
         ) : (

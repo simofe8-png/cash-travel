@@ -194,7 +194,7 @@ export class SqliteLedgerRepository implements LedgerRepository {
       ).lastInsertRowId;
       this.writeEntries(id, 1, draft, t);
       if (cardCharge) this.upsertCardCharge(id, cardCharge, null);
-      this.history(id, 1, 'CREATE', { after: this.snapshot(id) }, t);
+      this.writeHistory(id, 1, 'CREATE', { after: this.snapshot(id) }, t);
       return id;
     });
   }
@@ -219,7 +219,7 @@ export class SqliteLedgerRepository implements LedgerRepository {
       const existing = this.cardChargeRow(id);
       this.db.run('DELETE FROM card_charges WHERE transaction_id = ?', [id]);
       if (cardCharge) this.upsertCardCharge(id, cardCharge, existing);
-      this.history(id, revision, 'EDIT', { before, after: this.snapshot(id) }, t);
+      this.writeHistory(id, revision, 'EDIT', { before, after: this.snapshot(id) }, t);
     });
   }
 
@@ -228,7 +228,7 @@ export class SqliteLedgerRepository implements LedgerRepository {
       const current = this.activeRow(id);
       const t = this.now();
       this.db.run('UPDATE transactions SET deleted_at = ?, updated_at = ? WHERE id = ?', [t, t, id]);
-      this.history(id, current.revision, 'DELETE', { before: this.snapshot(id) }, t);
+      this.writeHistory(id, current.revision, 'DELETE', { before: this.snapshot(id) }, t);
     });
   }
 
@@ -245,7 +245,7 @@ export class SqliteLedgerRepository implements LedgerRepository {
       ).changes;
       if (changed !== 1) throw new Error('Transaction has no card charge');
       this.db.run('UPDATE transactions SET updated_at = ? WHERE id = ?', [t, id]);
-      this.history(id, current.revision, 'ACTUAL_CHARGE', { actualMinor }, t);
+      this.writeHistory(id, current.revision, 'ACTUAL_CHARGE', { actualMinor }, t);
     });
   }
 
@@ -312,6 +312,15 @@ export class SqliteLedgerRepository implements LedgerRepository {
       if (actual.join('|') !== expected.join('|')) bad.push(r.id);
     }
     return bad;
+  }
+
+  history(id: number): { action: 'CREATE' | 'EDIT' | 'DELETE' | 'ACTUAL_CHARGE'; revision: number; changedAt: string }[] {
+    return this.db
+      .all<{ action: 'CREATE' | 'EDIT' | 'DELETE' | 'ACTUAL_CHARGE'; revision: number; changed_at: string }>(
+        'SELECT action, revision, changed_at FROM transaction_history WHERE transaction_id = ? ORDER BY id',
+        [id],
+      )
+      .map((h) => ({ action: h.action, revision: h.revision, changedAt: h.changed_at }));
   }
 
   private assertValid(draft: TransactionDraft, cardCharge: CardChargeEstimate | null): void {
@@ -384,7 +393,7 @@ export class SqliteLedgerRepository implements LedgerRepository {
     };
   }
 
-  private history(id: number, revision: number, action: string, payload: unknown, t: string): void {
+  private writeHistory(id: number, revision: number, action: string, payload: unknown, t: string): void {
     this.db.run(
       'INSERT INTO transaction_history (transaction_id, revision, action, snapshot, changed_at) VALUES (?, ?, ?, ?, ?)',
       [id, revision, action, JSON.stringify(payload), t],

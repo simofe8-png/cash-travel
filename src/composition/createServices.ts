@@ -11,6 +11,7 @@ import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
 import { JournalService } from '../application/journal/JournalService';
 import { ReportingService } from '../application/reporting/ReportingService';
+import { TransactionService } from '../application/transactions/TransactionService';
 import { TripService } from '../application/trips/TripService';
 import { BUNDLED_CARD_RULE_SET } from '../data/cardRules/bundledRuleSet';
 import { SqliteCardRepository } from '../data/SqliteCardRepository';
@@ -57,6 +58,7 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
     reconciliationService: new ReconciliationService(ledger, uow, clock),
     journalService: new JournalService(new SqliteJournalQueries(db), reportingService),
     reportingService,
+    transactionService: new TransactionService(ledger, uow),
   };
 }
 
