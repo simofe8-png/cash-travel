@@ -22,7 +22,7 @@ execSync('npm run verify', { stdio: 'inherit' });
 
 const message = `${head.slice(0, 12)} ${description}`;
 process.stdout.write(`Publishing to channel "testing": ${message}\n`);
-execSync(`npx eas-cli update --channel testing --platform android --non-interactive --message ${JSON.stringify(message)}`, {
+execSync(`npx --yes eas-cli@24.11.0 update --channel testing --platform android --non-interactive --message ${JSON.stringify(message)}`, {
   stdio: 'inherit',
   // Same build-time config as the TEST binary, so the fingerprint runtime version matches it.
   env: { ...process.env, CT_UPDATES_CHANNEL: 'testing' },

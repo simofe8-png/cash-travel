@@ -40,3 +40,24 @@ therefore run from a **real ASCII copy** of the project, with a real ASCII SDK s
 ## Environment variables / secrets
 V1 has no backend, accounts or API keys. The FX reference provider used for reporting rates is a
 public, keyless endpoint (see its ADR). There are no secrets in this repository.
+
+## TEST build + OTA (EAS Update) workflow — permanent (ADR-0011)
+EAS project `@vr47252/cash-travel`; channel `testing` (branch `testing`); runtime version = fingerprint.
+The phone runs one TEST binary built with `CT_UPDATES_CHANNEL=testing`; it checks for a compatible update at each
+cold start, downloads it in the background and runs it at the next cold start (Settings → About → "עדכון" shows
+the running update ID).
+
+**JS / UI / asset change (no native change):**
+DEVELOPMENT → VERIFY (`npm run verify`, device check in Expo Go where relevant) → COMMIT → PUSH GitHub `main` →
+`npm run update:testing -- "<description>"` (refuses unclean/unpushed source, re-runs verify, message =
+commit SHA + description) → DEVICE VERIFY (close/reopen the app twice; check "עדכון" ID, data, offline).
+
+**Native-runtime change** (native dependency added/upgraded, config plugin, permissions or other native app.json
+fields, SDK upgrade — anything that changes `npx expo-updates fingerprint:generate --platform android` with
+`CT_UPDATES_CHANNEL=testing`):
+DEVELOPMENT → VERIFY → COMMIT → PUSH → NEW TEST BUILD (`docs/release/LOCAL_BUILD.md`, with
+`CT_UPDATES_CHANNEL=testing`, bump `android.versionCode`) → GitHub pre-release with the APK → INSTALL → DEVICE VERIFY.
+Never try to push a native change through OTA — the fingerprint makes such an update unreachable by design.
+
+Never: publish from uncommitted/unverified source, publish to any channel other than `testing`, create a
+production build/channel/update, or publish to Google Play without separate owner approval.
