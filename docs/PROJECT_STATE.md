@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 5: Core database schema.
+`docs/MASTER_BUILD_PLAN.md` — Step 6: Ledger Engine.
 
 ## Last completed build step
-Step 4 — SQLite foundation & migration framework — PASS.
+Step 5 — Core database schema — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -41,3 +41,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: expo-sqlite (~57.0.3, config plugin) adapter `src/infrastructure/sqlite/ExpoSqliteDatabase.ts`; test adapter `src/testing/NodeSqliteDatabase.ts` (node:sqlite); `src/data/db/transaction.ts` (BEGIN IMMEDIATE/COMMIT, nested savepoints, rejects async callbacks); `src/data/db/migrate.ts` (ordered 1..N, one atomic transaction per migration incl. PRAGMA user_version + schema_migrations row, downgrade refusal, FK on + foreign_key_check); composition `openAppDatabase()` (WAL).
 - Evidence: `npm run verify` → 67/67 tests incl. 12 SQLite integration tests: clean install, repeat startup on a reopened file DB, upgrade from earlier schema with data preserved, failing migration fully rolled back then fixed upgrade succeeds, downgrade refused, FK enforced, all-or-nothing transaction rollback (FK failure and thrown error), nested savepoints. Physical device (A54, Expo Go): two cold starts show `db ok: schema 0->0, fk=1`.
 - Decision: Metro must not run with CI=1 during device work (disables file watching → stale bundle).
+
+### Step 5 — Core database schema — PASS (2026-10-06)
+- Implemented: migration 0001 `core_schema` (13 STRICT tables, indexes, integrity triggers, built-in category seed). ADR-0003.
+- Evidence: `npm run verify` → 79/79 tests (12 schema tests). Device (Expo Go, A54): DB at schema 1 with fk=1 across two cold starts.
