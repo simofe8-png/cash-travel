@@ -26,7 +26,8 @@ Further references:
 - `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md` — supervision and verification protocol.
 
 ## Test build (Android)
-TEST / LOCAL release candidate — not a Google Play release, debug-signed: [v1.0.0 release](https://github.com/simofe8-png/cash-travel/releases/tag/v1.0.0) · [direct APK download](https://github.com/simofe8-png/cash-travel/releases/download/v1.0.0/app-release.apk).
+Current TEST build (install once; then receives OTA updates on the `testing` channel): [testing-build-2](https://github.com/simofe8-png/cash-travel/releases/tag/testing-build-2) · [direct APK](https://github.com/simofe8-png/cash-travel/releases/download/testing-build-2/cash-travel-1.0.1-testing.apk).
+V1.0.0 (no OTA): TEST / LOCAL release candidate — not a Google Play release, debug-signed: [v1.0.0 release](https://github.com/simofe8-png/cash-travel/releases/tag/v1.0.0) · [direct APK download](https://github.com/simofe8-png/cash-travel/releases/download/v1.0.0/app-release.apk).
 
 ## Quick start
 ```bash

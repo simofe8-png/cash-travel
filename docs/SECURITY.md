@@ -33,4 +33,4 @@ See `docs/security/REVIEW-2026-10-06.md`. Release manifest (Step 32): INTERNET, 
 ## OTA updates (TEST builds only, ADR-0011)
 TEST builds fetch JS bundles from EAS Update (HTTPS, Expo CDN) on channel `testing`; the Expo account controls what
 TEST devices run. Builds without `CT_UPDATES_CHANNEL=testing` ship with updates disabled. Before any production OTA,
-enable update code signing and re-review.
+enable update code signing and re-review. `expo-updates` adds the `ACCESS_NETWORK_STATE` permission (normal, no user data).
