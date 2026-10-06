@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 21: Screen 6 — Summary.
+`docs/MASTER_BUILD_PLAN.md` — Step 22: Screen 7 — Settings & trip/card configuration.
 
 ## Last completed build step
-Step 20 — Screen 5 — Action Details — PASS.
+Step 21 — Screen 6 — Summary — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -120,3 +120,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: ActionDetailsScreen (adaptive per type, card-charge section with estimate + fee-status explanation + rate provenance + actual-charge entry, change history, edit, soft delete with confirmation, deleted state); TransactionService (details/history, setActualCharge, delete with hook point for receipts); LedgerRepository.history; Add Action edit mode (`/add?edit=<id>`, prefilled, type immutable, keeps original occurrence unless changed, signed delta for adjustments; opening balances edit via Trip Setup).
 - Evidence: `npm run verify` → 283/283 incl. 5 Action Details UI tests (details/history; edit leaves exactly one active entry set and keeps time; actual charge preferred by reporting and cash-neutral; soft delete removes from balances/journal/reports with CREATE→DELETE history; deleted state not editable). Physical A54: edited the USD expense via Details→Edit; history "נוצר/נערך", original time kept, USD wallet re-derived to $50.00.
 - Deferred by plan: receipt controls are attached in Step 23 (receipt lifecycle).
+
+### Step 21 — Screen 6: Summary — PASS (2026-10-06)
+- Implemented: SummaryScreen — total trip cost, during trip, today, average/day (only once the trip started; partial flag), pre/post-trip when present, category tiles (zero-spend hidden, largest first) → `/journal?category=`, ATM-fees tile, cash vs credit bar; all values from ReportingService; no budget concept.
+- Evidence: `npm run verify` → 287/287 incl. 4 Summary UI tests (every figure equals ReportingService output; zero-spend tiles hidden; no budget/remaining text in the rendered tree; tile → filtered Journal; empty state, no average before trip). Physical A54: total ₪842.82 = ₪77.25 + ₪765.57 (hand-checked).
