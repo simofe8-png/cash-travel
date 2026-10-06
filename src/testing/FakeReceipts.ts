@@ -38,3 +38,17 @@ export class FakeCamera implements ReceiptCamera {
     return this.next;
   }
 }
+
+/** Scriptable device authentication for tests. */
+export class FakeDeviceAuth {
+  available = true;
+  results: ('success' | 'cancelled' | 'failed' | 'unavailable')[] = [];
+  prompts: string[] = [];
+  async isAvailable() {
+    return this.available;
+  }
+  async authenticate(reason: string) {
+    this.prompts.push(reason);
+    return this.results.shift() ?? 'success';
+  }
+}

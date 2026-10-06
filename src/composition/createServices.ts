@@ -7,12 +7,14 @@ import { ExpenseService } from '../application/expenses/ExpenseService';
 import { FxExchangeService } from '../application/fx/FxExchangeService';
 import { FxRateService } from '../application/fx/FxRateService';
 import type { Clock } from '../application/ports/Clock';
+import type { DeviceAuth } from '../application/ports/DeviceAuth';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { ReceiptCamera, ReceiptStore } from '../application/ports/ReceiptStore';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
 import { JournalService } from '../application/journal/JournalService';
 import { ReceiptService } from '../application/receipts/ReceiptService';
 import { ReportingService } from '../application/reporting/ReportingService';
+import { AppLockService } from '../application/security/AppLockService';
 import { TransactionService } from '../application/transactions/TransactionService';
 import { TripService } from '../application/trips/TripService';
 import { BUNDLED_CARD_RULE_SET } from '../data/cardRules/bundledRuleSet';
@@ -32,6 +34,7 @@ export interface PlatformAdapters {
   readonly fxProviders: readonly FxRateProvider[];
   readonly receiptStore: ReceiptStore;
   readonly receiptCamera: ReceiptCamera;
+  readonly deviceAuth: DeviceAuth;
 }
 
 export function createServices(db: SqlDatabase, clock: Clock, platform: PlatformAdapters) {
@@ -73,6 +76,7 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
     reportingService,
     transactionService,
     receiptService,
+    appLockService: new AppLockService(trips, platform.deviceAuth),
   };
 }
 

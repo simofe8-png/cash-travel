@@ -1,4 +1,5 @@
 import type { Clock } from '../application/ports/Clock';
+import { expoDeviceAuth } from '../infrastructure/auth/ExpoDeviceAuth';
 import { ExpoReceiptStore, expoReceiptCamera } from '../infrastructure/files/ExpoReceiptStore';
 import { CurrencyApiProvider } from '../infrastructure/fx/CurrencyApiProvider';
 import { FrankfurterProvider } from '../infrastructure/fx/FrankfurterProvider';
@@ -23,6 +24,7 @@ export function getAppServices(): AppServices {
       fxProviders: [new FrankfurterProvider(fetchFn), new CurrencyApiProvider(fetchFn)],
       receiptStore: new ExpoReceiptStore(),
       receiptCamera: expoReceiptCamera,
+      deviceAuth: expoDeviceAuth,
     });
     try {
       // Bounded startup reconciliation of receipt files (never touches financial data).

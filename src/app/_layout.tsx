@@ -7,6 +7,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { getAppServices } from '../composition/appContainer';
 import type { AppServices } from '../composition/createServices';
 import { AppProvider } from '../ui/AppContext';
+import { LockGate } from '../ui/components/LockGate';
 import { StartupErrorScreen } from '../ui/screens/StartupErrorScreen';
 import { colors, rtlRoot } from '../ui/theme/tokens';
 
@@ -38,12 +39,14 @@ export default function RootLayout() {
         <StartupErrorScreen />
       ) : (
         <AppProvider services={boot.services}>
+          <LockGate>
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.paper } }}>
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="add" options={{ presentation: 'modal', animation: 'slide_from_bottom' }} />
             <Stack.Screen name="trip-setup" />
             <Stack.Screen name="action/[id]" />
           </Stack>
+          </LockGate>
         </AppProvider>
       )}
       </View>

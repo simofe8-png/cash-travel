@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 24: Optional device authentication.
+`docs/MASTER_BUILD_PLAN.md` — Step 25: Professional PDF trip report.
 
 ## Last completed build step
-Step 23 — Receipt camera & private-file lifecycle — PASS.
+Step 24 — Optional device authentication — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -132,3 +132,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 23 — Receipt camera & private-file lifecycle — PASS (2026-10-06)
 - Implemented: expo-image-picker + expo-file-system (SDK-matched); ports ReceiptStore/ReceiptCamera; SqliteReceiptRepository; ReceiptService (attach/replace/remove/cleanup, capture); ExpoReceiptStore + expoReceiptCamera; delete hook (after commit); startup cleanup; ReceiptSection (Action Details) and capture-before-save in Add Action; app.json image-picker plugin (no microphone) + blockedPermissions. ADR-0008.
 - Evidence: `npm run verify` → 305/305 (incl. 9 lifecycle + 3 receipt UI tests). Physical A54: on-demand permission dialog, real capture, thumbnail, persistence across cold restart, preview, delete. Limitation: Expo Go is not debuggable, so private files were not listed on-device; DB/file consistency is proven by tests.
+
+### Step 24 — Optional device authentication — PASS (2026-10-06)
+- Implemented: expo-local-authentication (biometrics with device-credential fallback; no custom PIN); DeviceAuth port + expoDeviceAuth; AppLockService (enable/disable require auth; locks at cold start and after ≥60 s in background; unavailable device auth never locks the owner out); LockGate overlay in the root layout; Settings switch.
+- Evidence: `npm run verify` → 315/315 incl. 7 AppLockService + 3 LockGate tests (off by default, enable needs success, cannot enable without device security, re-lock threshold, failed auth keeps lock, recovery when auth disappears, disable needs auth). Physical A54 (Expo Go): toggling showed the "no screen lock on device" explanation and the switch stayed off; `adb shell locksettings verify` confirms the phone has no secure credential, so this is the correct real behavior.
+- Pending owner check (Step 30): positive unlock with the owner's real fingerprint/PIN needs the owner to set a device screen lock — not changed by Claude on a personal phone.

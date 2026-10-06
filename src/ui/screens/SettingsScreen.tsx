@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Switch, View } from 'react-native';
 
 import type { Card as CardModel } from '../../application/ports/CardRepository';
 import { useApp, useQuery } from '../AppContext';
@@ -36,8 +36,20 @@ export function SettingsScreen() {
   const [currencyOpen, setCurrencyOpen] = useState(false);
   const [cardSheet, setCardSheet] = useState<CardModel | 'new' | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [lockOn, setLockOn] = useState(() => services.appLockService.isEnabled());
   const trip = data.trip;
   if (!trip) return null;
+
+  const toggleLock = async (want: boolean) => {
+    if (want) {
+      const r = await services.appLockService.enable();
+      if (r === 'unavailable') Alert.alert('אין נעילת מסך במכשיר', 'כדי להשתמש בנעילה צריך קודם להגדיר במכשיר קוד, תבנית או טביעת אצבע.');
+      setLockOn(r === 'enabled');
+    } else {
+      const ok = await services.appLockService.disable();
+      setLockOn(!ok);
+    }
+  };
 
   const changeReporting = (code: string) => {
     services.tripService.updateTripDetails(trip.id, { name: trip.name, startDate: trip.startDate, endDate: trip.endDate, reportingCurrency: code });
@@ -80,6 +92,14 @@ export function SettingsScreen() {
 
       <SectionTitle title="פרטיות" />
       <Card>
+        <SettingsRow
+          icon="fingerprint"
+          title="נעילת אפליקציה"
+          subtitle="פתיחה בטביעת אצבע או בנעילת המסך של המכשיר"
+          testID="settings-lock"
+          trailing={<Switch value={lockOn} onValueChange={toggleLock} testID="settings-lock-switch" accessibilityLabel="נעילת אפליקציה" trackColor={{ true: colors.primary }} />}
+        />
+        <Divider />
         <SettingsRow icon="shield-lock-outline" title="הנתונים נשמרים רק במכשיר" subtitle="אין חשבון ואין גיבוי לענן. שערי מטבע נטענים מהרשת בלי לשלוח את הנתונים שלך." />
       </Card>
 
