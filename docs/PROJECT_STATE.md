@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 17: Screen 2 — Home.
+`docs/MASTER_BUILD_PLAN.md` — Step 18: Screen 3 — Add Action.
 
 ## Last completed build step
-Step 16 — Screen 1 — Trip Setup — PASS.
+Step 17 — Screen 2 — Home — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -100,3 +100,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: TripSetupScreen (create/edit via `?tripId=`, name, RTL calendar date fields, reporting currency picker default ILS, opening-balance rows with per-row validation, approximate starting equivalent with honest "no rate yet"), pickers (CurrencyPicker, CurrencyButton, AmountInput, CalendarSheet, DateField), useRateRefresh (background, never on save path), TripService.updateTrip (atomic details + openings).
 - Evidence: `npm run verify` → 255/255 incl. 4 Trip Setup UI tests (create → ledger opening balance; validation saves nothing; no-rate message; edit = audited EDIT revision). Physical A54 (Expo Go): created "Thailand" with 7,000 THB + 300 USD through the UI; live ECB refresh produced ≈ ₪1,554.87 (hand-checked: 636.18 + 918.69); app moved to the tab shell, tab order RTL.
 - Fixes found: parser read "7,000" as a decimal (ADR-0002 amended: 3-digit comma groups are thousands); footer and tab bar overlapped Android navigation (bottom insets); date fields wrapped (compact month names).
+
+### Step 17 — Screen 2: Home — PASS (2026-10-06)
+- Implemented: HomeScreen (trip header + day line, contextual trip-switcher sheet with "new trip", wallet cards opening/current/≈reporting, negative-wallet banner with FX/ATM/adjustment quick actions, today and trip totals with unavailable/estimated notes, recent actions), ActionRow + presentAction, JournalQueries/JournalService (list + limit only), background rate refresh.
+- Evidence: `npm run verify` → 264/264 incl. 4 Home UI tests asserting displayed values equal ReportingService/ledger outputs, negative banner + quick action → /add, trip switching, empty states. New architecture guards: UI/app never import money arithmetic or ledger/reporting computation (probe verified); no control characters in source. Physical A54: Home rendered with live-rate equivalents, RTL correct.
+- Fix: a guard written through a shell `node -e` lost escapes (literal backspace chars) and passed vacuously; caught by probe, rewritten with the Write tool, plus a control-character guard.

@@ -1,3 +1,5 @@
+import type { TransactionType } from '../../domain/ledger';
+
 /** Hebrew UI strings (V1 is Hebrew-only, RTL). */
 export const he = {
   appName: 'Cash Travel',
@@ -30,7 +32,7 @@ export const he = {
     FX_EXCHANGE: 'המרת מט״ח',
     ATM_WITHDRAWAL: 'משיכה מכספומט',
     CASH_ADJUSTMENT: 'תיקון יתרה',
-  } as Record<string, string>,
+  } satisfies Record<TransactionType, string>,
   payment: { CASH: 'מזומן', CARD: 'אשראי', unspecifiedCard: 'כרטיס אשראי' },
   issuers: { ISRACARD: 'ישראכרט', MAX: 'MAX', CAL: 'כאל', OTHER: 'אחר' } as Record<string, string>,
   errors: {

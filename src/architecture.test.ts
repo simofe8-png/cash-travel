@@ -38,4 +38,23 @@ describe('architecture guards', () => {
       .map(rel);
     expect(offenders).toEqual([]);
   });
+
+  it('UI never performs financial calculations itself (no money arithmetic or ledger semantics)', () => {
+    const FORBIDDEN = /^(add|subtract|sum|negate|convert|convertByRatio|convertWithQuote|cashEffects|summarizeSpending|totalOf|estimateCardCharge|divRoundHalfUp)$/;
+    const offenders: string[] = [];
+    for (const file of sourceFiles(SRC)) {
+      const f = rel(file);
+      if (!f.startsWith('ui/') && !f.startsWith('app/')) continue;
+      for (const m of readFileSync(file, 'utf8').matchAll(/import\s*(?:type\s*)?\{([^}]*)\}\s*from\s*'([^']*domain[^']*)'/g)) {
+        const names = (m[1] ?? '').split(',').map((n) => n.replace(/^\s*type\s+/, '').trim().split(/\s+as\s+/)[0] ?? '');
+        for (const n of names) if (FORBIDDEN.test(n)) offenders.push(`${f} → ${n}`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('source files contain no control characters (shell-escaping accidents)', () => {
+    const offenders = sourceFiles(SRC).filter((f) => /[\x00-\x08\x0B\x0C\x0E-\x1F]/.test(readFileSync(f, 'utf8'))).map(rel);
+    expect(offenders).toEqual([]);
+  });
 });

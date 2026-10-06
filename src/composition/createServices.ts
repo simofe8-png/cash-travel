@@ -9,6 +9,7 @@ import { FxRateService } from '../application/fx/FxRateService';
 import type { Clock } from '../application/ports/Clock';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
+import { JournalService } from '../application/journal/JournalService';
 import { ReportingService } from '../application/reporting/ReportingService';
 import { TripService } from '../application/trips/TripService';
 import { BUNDLED_CARD_RULE_SET } from '../data/cardRules/bundledRuleSet';
@@ -16,6 +17,7 @@ import { SqliteCardRepository } from '../data/SqliteCardRepository';
 import { SqliteCardRuleRepository } from '../data/SqliteCardRuleRepository';
 import { SqliteCategoryRepository } from '../data/SqliteCategoryRepository';
 import { SqliteFxRateRepository } from '../data/SqliteFxRateRepository';
+import { SqliteJournalQueries } from '../data/SqliteJournalQueries';
 import { SqliteLedgerRepository } from '../data/SqliteLedgerRepository';
 import { SqliteReportingQueries } from '../data/SqliteReportingQueries';
 import { SqliteTripRepository } from '../data/SqliteTripRepository';
@@ -52,6 +54,7 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
     fxService: new FxExchangeService(ledger, uow, clock),
     atmService: new AtmService(ledger, cards, uow, clock, cardCostService),
     reconciliationService: new ReconciliationService(ledger, uow, clock),
+    journalService: new JournalService(new SqliteJournalQueries(db)),
     reportingService: new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock),
   };
 }
