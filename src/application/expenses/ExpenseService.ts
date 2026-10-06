@@ -1,6 +1,8 @@
+import type { ChargedIn } from '../../domain/card';
 import type { ExpenseDraft, ExpensePayment, Occurrence } from '../../domain/ledger';
 import type { Money } from '../../domain/money';
 import { occurrence } from '../../domain/time';
+import type { CardCostService } from '../cards/CardCostService';
 import type { CardRepository } from '../ports/CardRepository';
 import type { CategoryRepository } from '../ports/CategoryRepository';
 import type { Clock } from '../ports/Clock';
@@ -18,6 +20,8 @@ export interface ExpenseInput {
   readonly description?: string | null;
   readonly place?: string | null;
   readonly note?: string | null;
+  /** Card only: "charged in another currency" (DCC). */
+  readonly chargedIn?: ChargedIn | null;
 }
 
 export interface ExpenseDefaults {
@@ -41,13 +45,14 @@ export class ExpenseService {
     private readonly cards: CardRepository,
     private readonly uow: UnitOfWork,
     private readonly clock: Clock,
+    private readonly cardCost: CardCostService,
   ) {}
 
   addExpense(input: ExpenseInput): number {
     const draft = this.toDraft(input);
     this.assertReferences(draft, null);
     return this.uow.run(() => {
-      const id = this.ledger.record(draft);
+      const id = this.ledger.record(draft, this.cardCharge(draft, input.chargedIn ?? null));
       this.remember(draft);
       return id;
     });
@@ -58,7 +63,7 @@ export class ExpenseService {
     if (!stored || stored.draft.type !== 'EXPENSE') throw new ExpenseError('NOT_AN_EXPENSE');
     const draft = this.toDraft(input);
     this.assertReferences(draft, stored.draft);
-    this.uow.run(() => this.ledger.revise(id, draft));
+    this.uow.run(() => this.ledger.revise(id, draft, this.cardCharge(draft, input.chargedIn ?? null)));
   }
 
   /** Fast-entry defaults: last-used currency/payment for this trip, else sensible fallbacks. */
@@ -74,6 +79,12 @@ export class ExpenseService {
       payment = { method: 'CARD', cardId: card && !card.archived ? card.id : null };
     }
     return { currency, payment };
+  }
+
+  /** Card expenses get an estimate from cached rates/rules (offline); cash expenses none. */
+  private cardCharge(d: ExpenseDraft, chargedIn: ChargedIn | null) {
+    if (d.payment.method !== 'CARD') return null;
+    return this.cardCost.estimate({ original: d.amount, chargedIn, cardId: d.payment.cardId, date: d.occurredLocalDate, kind: 'PURCHASE' });
   }
 
   private toDraft(i: ExpenseInput): ExpenseDraft {

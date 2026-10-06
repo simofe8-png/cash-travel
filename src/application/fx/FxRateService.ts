@@ -32,14 +32,20 @@ export class FxRateService {
     private readonly clock: Clock,
   ) {}
 
-  private get priority(): string[] {
-    return this.providers.map((p) => p.source);
+  /**
+   * Configured providers define the preference order; any other source already in the cache is
+   * still usable (after them, alphabetically) — cached provenance-tracked rates are never ignored.
+   */
+  private priority(candidates: readonly { source: string }[]): string[] {
+    const configured = this.providers.map((p) => p.source);
+    const others = [...new Set(candidates.map((c) => c.source))].filter((s) => !configured.includes(s)).sort();
+    return [...configured, ...others];
   }
 
   quote(from: string, to: string, date: string): RateQuote | null {
     if (from === to) return resolveQuote(from, to, date, [], []);
     const candidates = this.cache.find([from, to], windowStart(date), date);
-    return resolveQuote(from, to, date, candidates, this.priority);
+    return resolveQuote(from, to, date, candidates, this.priority(candidates));
   }
 
   convert(amount: Money, to: string, date: string): Conversion {

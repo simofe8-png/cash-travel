@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 13: Card Cost Engine & rule model.
+`docs/MASTER_BUILD_PLAN.md` — Step 14: Reporting Engine.
 
 ## Last completed build step
-Step 12 — FX reference provider abstraction & offline cache — PASS.
+Step 13 — Card Cost Engine & rule model — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -78,3 +78,10 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: domain fx/reference (EUR pivot, window policy, resolveQuote, convertWithQuote); ports FxRateProvider, FxRateRepository; SqliteFxRateRepository; infrastructure FrankfurterProvider (ECB, primary), CurrencyApiProvider (secondary), http helpers; FxRateService (sync quote/convert, async tolerant refresh). ADR-0004.
 - Evidence: `npm run verify` → 205/205 (offline). `npm run test:live` → 2/2 against real Frankfurter + currency-api endpoints.
 - Corrections: two expected values in my tests were hand-miscalculated (code correct; re-derived 7725.02); jest-expo mocks global fetch → live test uses node:https.
+
+### Step 13 — Card Cost Engine & rule model — PASS (2026-10-06)
+- Implemented: src/domain/card (rule-set model/validation, classifications, version compare, estimateCardCharge); bundled rule set 2026.10.1 (issuer fees null = unverified); CardRuleRepository + SqliteCardRuleRepository; CardService (validated card management); CardCostService (install/validate rules, offline estimate); ExpenseService (card estimate + DCC `chargedIn`) and AtmService (estimate of principal+fee) integrated. ADR-0005.
+- Evidence: `npm run verify` → 228/228. Hardcoded-fee guard probe failed as expected, then restored.
+- Fix found by tests: FxRateService ignored cached rates from sources not configured as providers → now preference-ordered but inclusive.
+- Corrections: several hand-computed expectations replaced by exact BigInt-derived values.
+- Risk: no verified issuer fee defaults; documented; users can classify cards.

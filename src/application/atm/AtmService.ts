@@ -2,6 +2,7 @@ import { atmCardDebit } from '../../domain/atm';
 import type { AtmWithdrawalDraft, CardChargeEstimate, Occurrence } from '../../domain/ledger';
 import type { Money } from '../../domain/money';
 import { occurrence } from '../../domain/time';
+import type { CardCostService } from '../cards/CardCostService';
 import type { CardRepository } from '../ports/CardRepository';
 import type { Clock } from '../ports/Clock';
 import type { LedgerRepository } from '../ports/LedgerRepository';
@@ -26,6 +27,7 @@ export class AtmService {
     private readonly cards: CardRepository,
     private readonly uow: UnitOfWork,
     private readonly clock: Clock,
+    private readonly cardCost: CardCostService,
   ) {}
 
   withdraw(input: AtmInput): number {
@@ -43,26 +45,11 @@ export class AtmService {
   }
 
   /**
-   * The card is debited principal + local fee in the cash currency (a known fact). Its billing-
-   * currency cost is unknown here; the Card Cost Engine estimates it and the user may enter the actual.
+   * The card is debited principal + local fee in the cash currency (a known fact, kept as the charged
+   * amount). Its billing-currency cost is estimated by the Card Cost Engine; the actual can be entered later.
    */
   private cardCharge(d: AtmWithdrawalDraft): CardChargeEstimate {
-    const debit = atmCardDebit(d);
-    const card = d.cardId !== null ? this.cards.get(d.cardId) : undefined;
-    return {
-      billingCurrency: card?.billingCurrency ?? 'ILS',
-      chargedCurrency: debit.currency,
-      chargedAmountMinor: debit.minor,
-      status: 'UNAVAILABLE',
-      estimateMinor: null,
-      feeStatus: 'UNKNOWN',
-      rate: null,
-      rateSource: null,
-      rateDate: null,
-      ruleSetVersion: null,
-      ruleId: null,
-      estimatedAt: null,
-    };
+    return this.cardCost.estimate({ original: atmCardDebit(d), chargedIn: null, cardId: d.cardId, date: d.occurredLocalDate, kind: 'ATM' });
   }
 
   private assertCard(cardId: number | null, previous: number | null): void {
