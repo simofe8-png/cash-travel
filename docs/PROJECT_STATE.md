@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 26: Offline & lifecycle hardening.
+`docs/MASTER_BUILD_PLAN.md` — Step 27: Security & privacy hardening.
 
 ## Last completed build step
-Step 25 — Professional PDF trip report — PASS.
+Step 26 — Offline & lifecycle hardening — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -142,3 +142,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: expo-print + expo-sharing; PdfExporter port + expoPdfExporter (base64 → named cache file → share sheet; old reports cleaned before export and at startup); TripReportService; Hebrew RTL A4 template with escaping; Settings export entry. ADR-0009.
 - Evidence: `npm run verify` → 319/319 (4 report tests). Physical A54: share sheet with CashTravel-Thailand.pdf (not sent to anyone). Headless-Edge rendering of the template inspected; totals/averages/daily totals/wallets hand-checked.
 - Fix found on device: moving the printer output failed in Expo Go ("Missing READ permission") → write from base64 into our cache.
+
+### Step 26 — Offline & lifecycle hardening — PASS (2026-10-06)
+- Fixed: background rate refresh never retried after an offline failure → useRateRefresh now also retries on app foreground (single-flight).
+- Added src/application/offline.test.ts: full workflow (trip, cash/card expense, FX, ATM, reconcile) with a failing network provider; honest unavailable reporting; restart on a reopened file DB (process death) with identical state; back online → rates + derived card estimate fill in while transactions/ledger/card_charges stay byte-identical; cached rates work offline again; timezone change mid-trip keeps day grouping, "today" follows device offset.
+- Evidence: `npm run verify` → 324/324. Physical A54 in airplane mode with Wi-Fi off (ping: network unreachable; DNS fails): cold start, expense saved via UI, USD wallet −$70 with banner, totals from cached rates; connectivity then restored (airplane off, Wi-Fi on, ping OK).
