@@ -23,6 +23,11 @@ export interface JournalRow {
 
 export interface JournalFilter {
   readonly limit?: number;
+  /** Case-insensitive substring of description, place or note. */
+  readonly search?: string;
+  readonly categoryId?: number;
+  readonly type?: TransactionType;
+  readonly paymentMethod?: 'CASH' | 'CARD';
 }
 
 export interface JournalQueries {

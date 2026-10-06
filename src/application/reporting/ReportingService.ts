@@ -80,6 +80,18 @@ export class ReportingService {
     return summarizeSpending(items, trip, this.today());
   }
 
+  /** Journal daily totals: EXPENSE transactions only (no ATM fees, FX or ATM principal), per local date. */
+  dailyExpenseTotals(tripId: number): Map<string, Total> {
+    const trip = this.requireTrip(tripId);
+    const items = this.queries
+      .costRows(tripId)
+      .filter((r) => r.kind !== 'ATM_FEE')
+      .map((r) => this.toItem(r, trip.reportingCurrency));
+    const byDate = new Map<string, CostItem[]>();
+    for (const i of items) byDate.set(i.date, [...(byDate.get(i.date) ?? []), i]);
+    return new Map([...byDate.entries()].map(([d, list]) => [d, totalOf(list, trip.reportingCurrency)]));
+  }
+
   /** Rate needs for a background refresh: every (date, currency) in use, plus today for wallets/cards. */
   rateNeeds(tripId: number): RateNeed[] {
     const byDate = new Map<string, Set<string>>();

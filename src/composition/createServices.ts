@@ -36,6 +36,7 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
   const fxRateService = new FxRateService(fxRates, providers, clock);
   const cardCostService = new CardCostService(cards, cardRules, fxRateService, clock);
   cardCostService.installRuleSet(BUNDLED_CARD_RULE_SET);
+  const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
 
   return {
     ledger,
@@ -54,8 +55,8 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
     fxService: new FxExchangeService(ledger, uow, clock),
     atmService: new AtmService(ledger, cards, uow, clock, cardCostService),
     reconciliationService: new ReconciliationService(ledger, uow, clock),
-    journalService: new JournalService(new SqliteJournalQueries(db)),
-    reportingService: new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock),
+    journalService: new JournalService(new SqliteJournalQueries(db), reportingService),
+    reportingService,
   };
 }
 

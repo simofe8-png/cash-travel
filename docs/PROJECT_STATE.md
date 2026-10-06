@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 19: Screen 4 — Journal.
+`docs/MASTER_BUILD_PLAN.md` — Step 20: Screen 5 — Action Details.
 
 ## Last completed build step
-Step 18 — Screen 3 — Add Action — PASS.
+Step 19 — Screen 4 — Journal — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -110,3 +110,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: AddActionScreen — Expense (big amount, category grid, Cash / configured cards / unspecified card, remembered defaults), FX (given/received with live derived rate), ATM (received + optional local fee + funding card), Cash Adjustment under "more actions" (counted cash → derived difference via ReconciliationService); advanced details: date (calendar) + time, description, place, note, DCC "charged in another currency" (+optional amount). Mode/currency deep-link params used by Home quick actions. TripService.nowOccurrence/offsetMinutes so UI never reads the device clock.
 - Evidence: `npm run verify` → 268/268 incl. 7 Add Action UI tests (minimal expense flow = amount → category → save; card+DCC; FX two legs + rate text; ATM fee; adjustment difference; validation saves nothing; chosen local time). Physical A54: 850 THB cash food + 400 USD cash shopping entered through the UI → THB ฿6,150, USD −$100 in red with banner + quick actions, today ₪1,302.17 (hand-checked 77.25 + 1,224.92).
 - Dev note: Fast Refresh keeps the composed services singleton; after changing service classes, cold-start Expo Go (seen as "undefined is not a function", gone after cold start). Not applicable to release builds.
+
+### Step 19 — Screen 4: Journal — PASS (2026-10-06)
+- Implemented: JournalFilter (search over description/place/note with literal %/_ via LIKE ESCAPE '!', category, type, payment) in SQL; JournalService.days (newest first, grouped by local date); ReportingService.dailyExpenseTotals (EXPENSE only); JournalScreen (search, filter sheet, removable active-filter chips, day sections with expense totals, `?category=` entry).
+- Evidence: `npm run verify` → 278/278 incl. 7 journal application tests (order, local-day grouping incl. late-night, EXPENSE-only daily totals excluding FX/ATM principal and ATM fees, search, combinable filters, deleted excluded) and 3 Journal UI tests. Physical A54: journal day header "הוצאות: ₪1,302.17" (openings excluded), RTL rows.
+- Decision: day totals are the day's full EXPENSE spending regardless of active filters (spec: daily totals count EXPENSE transactions).

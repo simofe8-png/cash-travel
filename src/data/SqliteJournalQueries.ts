@@ -30,8 +30,27 @@ export class SqliteJournalQueries implements JournalQueries {
                       t.counter_amount_minor, t.counter_currency, t.category_id, t.payment_method, t.card_id, t.fee_minor,
                       t.description, t.place, t.note, EXISTS (SELECT 1 FROM receipts r WHERE r.transaction_id = t.id) AS has_receipt
                  FROM transactions t
-                WHERE t.trip_id = ? AND t.deleted_at IS NULL
-                ORDER BY t.occurred_at DESC, t.id DESC`;
+                WHERE t.trip_id = ? AND t.deleted_at IS NULL`;
+    const term = filter.search?.trim();
+    if (term) {
+      // '!' is the LIKE escape character so user-typed % and _ match literally.
+      const like = `%${term.replace(/[!%_]/g, (c) => `!${c}`)}%`;
+      sql += ` AND (t.description LIKE ? ESCAPE '!' OR t.place LIKE ? ESCAPE '!' OR t.note LIKE ? ESCAPE '!')`;
+      params.push(like, like, like);
+    }
+    if (filter.categoryId !== undefined) {
+      sql += ' AND t.category_id = ?';
+      params.push(filter.categoryId);
+    }
+    if (filter.type !== undefined) {
+      sql += ' AND t.type = ?';
+      params.push(filter.type);
+    }
+    if (filter.paymentMethod !== undefined) {
+      sql += ' AND t.payment_method = ?';
+      params.push(filter.paymentMethod);
+    }
+    sql += ' ORDER BY t.occurred_at DESC, t.id DESC';
     if (filter.limit !== undefined) {
       sql += ' LIMIT ?';
       params.push(filter.limit);
