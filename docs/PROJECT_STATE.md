@@ -6,7 +6,7 @@ AUTONOMOUS END-TO-END.
 PASS is an internal quality gate. Claude does not ask the user for permission between normal Master Build Plan steps. After a verified PASS, Claude updates this file and immediately continues to the next numbered step.
 
 ## Current status
-**V1 COMPLETE** — all Master Build Plan steps 1–35 PASS (incl. governance reconciliation). Checkpoint: local tag `v1.0.0` (not pushed). Owner-only items listed below.
+**V1 COMPLETE** — all Master Build Plan steps 1–35 PASS (incl. governance reconciliation). Checkpoint: tag `v1.0.0` (`a368089`), published to GitHub. Owner-only items listed below.
 
 ## Authoritative next step
 None — the Master Build Plan is complete. Future work requires a new product decision (`docs/ROADMAP.md`).
@@ -250,4 +250,10 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 ## Owner-only items (not blockers for V1 completion)
 1. Positive app-lock unlock on a phone with a configured screen lock (automated tests cover it).
 2. Production signing keystore and any store publication.
+
+## Remote repository (2026-10-06)
+- GitHub: https://github.com/simofe8-png/cash-travel (private) — remote `origin`, branch `main`; the remote development source of truth from now on.
+- Pushed: full history of `main` (HEAD `a368089` at publication) and tag `v1.0.0`.
+- Release: https://github.com/simofe8-png/cash-travel/releases/tag/v1.0.0 — pre-release "TEST / LOCAL RC (not a Google Play release)", asset `app-release.apk` (46,512,900 bytes, SHA-256 `23910c38…e1a3`, built from `a65917d`; recovered byte-identical from the verified installation on the A54 because the build mirror had been cleaned).
+- Pre-publication checks: clean tree; tag = HEAD; no key/keystore/env/db/apk/log/native/cache file in any commit (history name + content scan); post-publication: remote file list identical to `git ls-files` (211 files), remote main/tag SHA = local, release asset downloaded and hash-matched.
 
