@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 29: Full automated regression gate.
+`docs/MASTER_BUILD_PLAN.md` — Step 30: Android physical-device acceptance QA.
 
 ## Last completed build step
-Step 28 — Migration & data-integrity hardening — PASS.
+Step 29 — Full automated regression gate — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -167,3 +167,8 @@ Trigger: the user added `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md`, `doc
 - **Deliberate deviations (written spec beats old mockup content):** no budget/"remaining", no Duplicate action, no notifications/language/country rows, no card numbers/brand logos, no Summary recent list/balance card, no Journal currency strip — listed in ADR-0010.
 - **Evidence:** `npm run verify` → lint 0 warnings, typecheck clean, 338/338 tests (new: display-format/flag rules, exact `equivalent()` rate). Physical Galaxy A54 (Android 16, he-IL, user font scale 1.3) via Expo Go, live data, each screen compared with its reference: Home, Journal, Add Action (expense + ATM modes), Action Details, Summary, Settings, Trip Setup (edit). Deviations found on device and fixed: truncated labels at 1.3 font scale, oversized Settings photo, bidi order in the conversion line, duplicated subtitle.
 - **Git:** branch `main`, no remote; governance docs and reconciliation committed locally (see git log).
+
+### Step 29 — Full automated regression gate — PASS (2026-10-06)
+- Added `src/regression.test.ts`: the supervisor §14 matrix as one deterministic trip with exact hand-computed figures at every stage — opening THB/USD/EUR; cash vs credit expense; USD→THB exchange; card-funded THB ATM withdrawal with local fee; ±cash adjustments; negative EUR cash; edit; soft delete; pre-trip expense (total ₪2,762 vs during ₪762); VND without rate (saved, reported unavailable); later rate enrichment (+₪16, transactions/ledger/card_charges byte-identical); custom category create→use→delete-to-Other; reporting currency ILS→USD→ILS (₪2,788 ↔ $697, originals unchanged); second trip isolation and current-trip switch. Ledger consistency + IntegrityService checked after each stage.
+- Evidence: `npm run verify` → lint 0 warnings, typecheck clean, 352/352 tests in 36 suites; no skipped/focused/todo tests (grep). `npm run test:live` (real ECB/Frankfurter + currency-api endpoints) → 2/2. Verification level: automated (+ live network contract test).
+
