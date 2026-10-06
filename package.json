@@ -25,7 +25,8 @@
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
     "test": "jest",
-    "verify": "npm run lint && npm run typecheck && npm test -- --ci"
+    "verify": "npm run lint && npm run typecheck && npm test -- --ci",
+    "test:live": "jest --testPathIgnorePatterns=/node_modules/ --testPathPattern=live.test"
   },
   "private": true
 }

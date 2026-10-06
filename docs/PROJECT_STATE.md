@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 12: FX reference provider abstraction & offline cache.
+`docs/MASTER_BUILD_PLAN.md` — Step 13: Card Cost Engine & rule model.
 
 ## Last completed build step
-Step 11 — Cash Adjustment & reconciliation — PASS.
+Step 12 — FX reference provider abstraction & offline cache — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -73,3 +73,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 11 — Cash Adjustment & reconciliation — PASS (2026-10-06)
 - Implemented: ReconciliationService — adjust (signed delta), editAdjustment, difference, reconcile (counted cash → derived delta; no-op when equal).
 - Evidence: `npm run verify` → 173/173. Adjustments are CASH_ADJUSTMENT ledger events with CREATE history, not expenses; reconcile fixes negative wallet to counted 0; found cash in new currency; edit/soft delete restore derived balance; repository scan finds no setBalance/updateBalance-style API; no balance column (architecture guard).
+
+### Step 12 — FX reference provider abstraction & offline cache — PASS (2026-10-06)
+- Implemented: domain fx/reference (EUR pivot, window policy, resolveQuote, convertWithQuote); ports FxRateProvider, FxRateRepository; SqliteFxRateRepository; infrastructure FrankfurterProvider (ECB, primary), CurrencyApiProvider (secondary), http helpers; FxRateService (sync quote/convert, async tolerant refresh). ADR-0004.
+- Evidence: `npm run verify` → 205/205 (offline). `npm run test:live` → 2/2 against real Frankfurter + currency-api endpoints.
+- Corrections: two expected values in my tests were hand-miscalculated (code correct; re-derived 7725.02); jest-expo mocks global fetch → live test uses node:https.
