@@ -6,13 +6,13 @@ AUTONOMOUS END-TO-END.
 PASS is an internal quality gate. Claude does not ask the user for permission between normal Master Build Plan steps. After a verified PASS, Claude updates this file and immediately continues to the next numbered step.
 
 ## Current status
-Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
+**V1 COMPLETE** — all Master Build Plan steps 1–35 PASS (incl. governance reconciliation). Checkpoint: local tag `v1.0.0` (not pushed). Owner-only items listed below.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 35: Final Repository Hygiene & Clean Verification.
+None — the Master Build Plan is complete. Future work requires a new product decision (`docs/ROADMAP.md`).
 
 ## Last completed build step
-Step 34 — Lean Architecture Audit — PASS.
+Step 35 — Final Repository Hygiene & Clean Verification — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -217,6 +217,35 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 - Report: `docs/release/LEAN_AUDIT-V1.md` (19 runtime deps each justified, incl. required router/icon peers; ports/services/useQuery kept with reasons; runtime checks: no background work/analytics, offline save path, bounded startup, indexed per-trip queries).
 - Removed dead code: `subtract`, `negate`, `sum`, `isNegative`, `isZero`, `isPositive`, types `PaymentMethod`, `CategoryIcon` (no production references; exact-addition test kept via `add`). Dependencies removed: none (none unused).
 - Evidence: dependency import/peer scan; exported-symbol reference scan; `npm run verify` → lint 0, typecheck clean, 352/352.
+
+### Step 35 — Final Repository Hygiene & Clean Verification — PASS (2026-10-06)
+**Removed (evidence-based):**
+- `assets/splash-icon.png` — Expo template image referenced by no config, code or build file (app.json/src grep; prebuild has no splash plugin).
+- `.expo/` — git-ignored Metro/Expo dev cache (regenerated on `expo start`).
+- `C:ctb` — ASCII build mirror + Gradle/NDK intermediates (~3+ GB) created for Step 32; fully reproducible via `docs/release/LOCAL_BUILD.md`; the RC was already verified and installed.
+- Temporary files outside the repo: `/tmp/ps_old.md` (state restore helper), the export test output, session scratch helpers/screenshots/sharp install (session temp dir).
+- Stopped every background process started during the work (Metro instances on :8081, adb watcher); `adb reverse` mappings removed.
+- Dead code (Step 34): eight unused money/ledger helpers/types; (reconciliation) `Placeholder.tsx`.
+
+**Retained (intentionally):**
+- `src/testing/**` — test harness (node:sqlite adapter, fakes, fixtures) used by the suites; excluded from the app bundle.
+- `*.live.test.ts` — opt-in live FX contract test (`npm run test:live`), excluded from CI by jest config.
+- `assets/favicon.png` — referenced by `app.json` (web config).
+- `docs/ui/references/*.png` — approved visual contract (user-provided, authoritative).
+- `docs/release/*`, `docs/security/*` — release checklist, build guide, lean audit, security review.
+- Outside the repo, not ours to delete: `C:ak-sdk`, `C:ak-jdk`, `C:ak-gradle` (sibling project's toolchain; used read-mostly as build caches). On the phone: the RC app `com.cashtravel.app` (installed for owner testing; contains trip "RC") and Expo Go dev data (trips Thailand/QA) — owner's device data, left in place.
+
+**Dependencies removed:** none (all 19 runtime + dev dependencies are used/required — Step 34).
+
+**Final repository status:** working tree clean after commit; no known disposable development artifacts remain in the repository; `.gitignore` covers node_modules, .expo, native folders, keys/keystores and local env files.
+
+**Post-cleanup verification:**
+- `npm ci` (clean dependency install from the lockfile) → success.
+- `npm run verify` → lint 0 warnings, typecheck clean, **352/352 tests in 36 suites** (financial engines, SQLite migrations/upgrades, regression matrix, offline/lifecycle, UI/navigation).
+- `npx expo-doctor` → 20/21: the one failing check reports six SDK-57 patch releases published after the RC (expo 57.0.27, expo-asset 57.0.19, expo-constants 57.0.21, expo-linking 57.0.12, expo-router 57.0.25, expo-sqlite 57.0.4). Intentionally not upgraded after device/RC verification (the lockfile pins the verified versions); routine maintenance item.
+- `npx expo export --platform android` → production Hermes bundle built (3.6 MB).
+- Physical A54 (Expo Go) cold start of the final code → Home renders with persisted data.
+- Native RC (Step 32) remains representative: no native dependency or config change since, except removing an unreferenced asset.
 
 ## Owner-only items (not blockers for V1 completion)
 1. Positive app-lock unlock on a phone with a configured screen lock (automated tests cover it).
