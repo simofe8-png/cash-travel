@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 11: Cash Adjustment & reconciliation.
+`docs/MASTER_BUILD_PLAN.md` — Step 12: FX reference provider abstraction & offline cache.
 
 ## Last completed build step
-Step 10 — ATM Withdrawal Engine — PASS.
+Step 11 — Cash Adjustment & reconciliation — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -69,3 +69,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: src/domain/atm (atmCardDebit = principal + fee, atmFeeCost = fee only); AtmService (withdraw/editWithdrawal); every ATM withdrawal is card-funded (card optional/unspecified) and carries a card_charges row with the known local-currency debit; estimate UNAVAILABLE until the Card Cost Engine (Step 13); actual entered via setActualCharge.
 - Evidence: `npm run verify` → 166/166. Principal +only its wallet (USD/ILS untouched), not isExpense, fee never touches cash, debit = principal+fee, zero fee normalized to none, actual separate and cash-neutral, edit preserves actual, invalid fee currency/amount/card rejected, soft delete removes cash.
 - Decision: the local ATM fee is a trip cost (reported separately as ATM fees; reporting ADR at Step 14), never an EXPENSE transaction and never a cash effect.
+
+### Step 11 — Cash Adjustment & reconciliation — PASS (2026-10-06)
+- Implemented: ReconciliationService — adjust (signed delta), editAdjustment, difference, reconcile (counted cash → derived delta; no-op when equal).
+- Evidence: `npm run verify` → 173/173. Adjustments are CASH_ADJUSTMENT ledger events with CREATE history, not expenses; reconcile fixes negative wallet to counted 0; found cash in new currency; edit/soft delete restore derived balance; repository scan finds no setBalance/updateBalance-style API; no balance column (architecture guard).
