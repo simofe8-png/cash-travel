@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 9: FX Exchange Engine.
+`docs/MASTER_BUILD_PLAN.md` — Step 10: ATM Withdrawal Engine.
 
 ## Last completed build step
-Step 8 — Expense Engine — PASS.
+Step 9 — FX Exchange Engine — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -59,3 +59,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: src/domain/expense (built-in keys, custom-category validation, icon set); ports CategoryRepository, CardRepository (no credential fields); SqliteCategoryRepository, SqliteCardRepository (archive-only); ExpenseService (add/edit, reference checks incl. archived category/card rules, per-trip fast-entry defaults); CategoryService (custom create/rename, delete with reassignment to Other or chosen category through Ledger revisions, atomic).
 - Evidence: `npm run verify` → 150/150. Cash expense −wallet; credit expense no cash effect; both isExpense; negative wallet allowed; defaults remembered per trip; reassignment audited (EDIT history), no cash effect, atomic under injected failure.
 - Decision: custom categories are global (shared across trips); a deleted custom category is archived so historical/soft-deleted references stay valid.
+
+### Step 9 — FX Exchange Engine — PASS (2026-10-06)
+- Implemented: src/domain/fx/exchange.ts (exchangeRateView: both directions, 8 dp, natural ≥1 display direction); FxExchangeService (exchange/editExchange via Ledger).
+- Evidence: `npm run verify` → 159/159. Both wallets change atomically (2nd-leg injected failure → no change); received wallet auto-created; never isExpense; same-currency/zero/unsupported rejected; edit replaces both legs; precision across exponents (ILS/JPY/JOD/IDR).
+- Decision: the actual given/received amounts are the persisted snapshot of an exchange; the effective rate is derived on read (no redundant stored rate). Reference-rate snapshots belong to Step 12.

@@ -1,6 +1,7 @@
 // Wires real SQLite repositories + use-cases for application-level tests.
 import { CategoryService } from '../application/expenses/CategoryService';
 import { ExpenseService } from '../application/expenses/ExpenseService';
+import { FxExchangeService } from '../application/fx/FxExchangeService';
 import { TripService } from '../application/trips/TripService';
 import { SqliteCardRepository } from '../data/SqliteCardRepository';
 import { SqliteCategoryRepository } from '../data/SqliteCategoryRepository';
@@ -20,5 +21,6 @@ export function testServices() {
   const tripService = new TripService(trips, ledger, uow, clock);
   const expenseService = new ExpenseService(ledger, trips, categories, cards, uow, clock);
   const categoryService = new CategoryService(categories, ledger, uow);
-  return { db, clock, ledger, trips, categories, cards, uow, tripService, expenseService, categoryService };
+  const fxService = new FxExchangeService(ledger, uow, clock);
+  return { db, clock, ledger, trips, categories, cards, uow, tripService, expenseService, categoryService, fxService };
 }
