@@ -33,7 +33,7 @@ therefore run from a **real ASCII copy** of the project, with a real ASCII SDK s
 `GRADLE_USER_HOME`. See `docs/release/LOCAL_BUILD.md` (created at the release-candidate step).
 
 ## Git conventions
-- Remote source of truth: GitHub `simofe8-png/cash-travel` (private), remote `origin`, branch `main`. Verified changes are committed and pushed there (owner instruction, 2026-10-06). Testable milestones get a GitHub Release (pre-release, labelled TEST / LOCAL RC) with the verified APK. Google Play / store publication is never done without separate owner approval.
+- Remote source of truth: GitHub `simofe8-png/cash-travel` (public since 2026-10-06 — full history safety-scanned before the change; re-check before every push), remote `origin`, branch `main`. Verified changes are committed and pushed there (owner instruction, 2026-10-06). Testable milestones get a GitHub Release (pre-release, labelled TEST / LOCAL RC) with the verified APK. Google Play / store publication is never done without separate owner approval.
 - LF line endings (`.gitattributes`). Generated native folders (`/android`, `/ios`) are not committed (Expo prebuild/CNG).
 - Never commit keystores, `.env*.local`, or credentials.
 

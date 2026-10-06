@@ -252,8 +252,9 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 2. Production signing keystore and any store publication.
 
 ## Remote repository (2026-10-06)
-- GitHub: https://github.com/simofe8-png/cash-travel (private) — remote `origin`, branch `main`; the remote development source of truth from now on.
+- GitHub: https://github.com/simofe8-png/cash-travel (public since 2026-10-06, after a full-history scan: no keys/secrets/env/databases/receipt photos/machine paths; commit author email is the owner's public attribution) — remote `origin`, branch `main`; the remote development source of truth from now on.
 - Pushed: full history of `main` (HEAD `a368089` at publication) and tag `v1.0.0`.
 - Release: https://github.com/simofe8-png/cash-travel/releases/tag/v1.0.0 — pre-release "TEST / LOCAL RC (not a Google Play release)", asset `app-release.apk` (46,512,900 bytes, SHA-256 `23910c38…e1a3`, built from `a65917d`; recovered byte-identical from the verified installation on the A54 because the build mirror had been cleaned).
+- Public direct APK download (no GitHub sign-in): https://github.com/simofe8-png/cash-travel/releases/download/v1.0.0/app-release.apk
 - Pre-publication checks: clean tree; tag = HEAD; no key/keystore/env/db/apk/log/native/cache file in any commit (history name + content scan); post-publication: remote file list identical to `git ls-files` (211 files), remote main/tag SHA = local, release asset downloaded and hash-matched.
 

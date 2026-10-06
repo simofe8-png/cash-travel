@@ -25,6 +25,9 @@ Further references:
 - `docs/security/REVIEW-2026-10-06.md` — security/privacy review.
 - `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md` — supervision and verification protocol.
 
+## Test build (Android)
+TEST / LOCAL release candidate — not a Google Play release, debug-signed: [v1.0.0 release](https://github.com/simofe8-png/cash-travel/releases/tag/v1.0.0) · [direct APK download](https://github.com/simofe8-png/cash-travel/releases/download/v1.0.0/app-release.apk).
+
 ## Quick start
 ```bash
 npm install
