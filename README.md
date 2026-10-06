@@ -12,5 +12,6 @@ This repository is governed by `CLAUDE.md` and the documents under `docs/`.
 7. `docs/MASTER_BUILD_PLAN.md` — sequential 1→N implementation plan.
 8. `docs/PROJECT_STATE.md` — current execution checkpoint.
 9. `docs/adr/` — long-lived technical decisions.
+10. `docs/ENVIRONMENT.md` — toolchain, commands and build constraints.
 
 If documents conflict, do not guess or silently reinterpret product/financial semantics. Resolve conflicts autonomously when the authoritative precedence is clear; stop only when the conflict requires a product/security/scope decision outside the approved baseline.
