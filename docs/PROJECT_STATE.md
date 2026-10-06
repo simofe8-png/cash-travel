@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 30: Android physical-device acceptance QA.
+`docs/MASTER_BUILD_PLAN.md` — Step 31: Release-readiness audit.
 
 ## Last completed build step
-Step 29 — Full automated regression gate — PASS.
+Step 30 — Android physical-device acceptance QA — PASS (one owner-only check pending, see step log).
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -171,4 +171,27 @@ Trigger: the user added `CASH_TRAVEL_SENIOR_TECHNICAL_SUPERVISOR_AGENT.md`, `doc
 ### Step 29 — Full automated regression gate — PASS (2026-10-06)
 - Added `src/regression.test.ts`: the supervisor §14 matrix as one deterministic trip with exact hand-computed figures at every stage — opening THB/USD/EUR; cash vs credit expense; USD→THB exchange; card-funded THB ATM withdrawal with local fee; ±cash adjustments; negative EUR cash; edit; soft delete; pre-trip expense (total ₪2,762 vs during ₪762); VND without rate (saved, reported unavailable); later rate enrichment (+₪16, transactions/ledger/card_charges byte-identical); custom category create→use→delete-to-Other; reporting currency ILS→USD→ILS (₪2,788 ↔ $697, originals unchanged); second trip isolation and current-trip switch. Ledger consistency + IntegrityService checked after each stage.
 - Evidence: `npm run verify` → lint 0 warnings, typecheck clean, 352/352 tests in 36 suites; no skipped/focused/todo tests (grep). `npm run test:live` (real ECB/Frankfurter + currency-api endpoints) → 2/2. Verification level: automated (+ live network contract test).
+
+### Step 30 — Android physical-device acceptance QA — PASS (2026-10-06)
+Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Metro over `adb reverse`), redesigned UI. New trip "QA" driven end to end through the UI (adb taps by testID; values read from the accessibility tree):
+| Scenario | Result |
+| --- | --- |
+| Trip setup with opening THB 5,000 / USD 200 | Home ฿5,000 / $200 |
+| Cash expense 300 THB (food) | THB 4,700 |
+| Credit expense 1,200 THB (Isracard) | cash unchanged ฿4,700; card estimate ₪109.06 "no FX fee", ECB source/date |
+| FX: gave $100, received ฿3,200 | ฿7,900 / $100; effective rate "1 USD = 32 THB"; not in spending |
+| ATM card-funded ฿2,000 + local fee ฿220 | ฿9,900 (fee not cash) |
+| Negative cash: $500 cash expense | −$400 in red + guidance banner; saved |
+| Cash adjustment (counted $0) | difference +$400 shown and recorded; $0 |
+| Receipt | camera permission flow → real capture → thumbnail on the card expense |
+| Actual card charge ₪112.40, then edit amount → ฿1,250 | actual preserved; history: created / actual / edited |
+| Soft delete of the $500 expense | removed from journal; USD re-derived to $500 |
+| Journal | day total ₪139.66 = expenses only (₪27.26 + actual ₪112.40) |
+| Offline: airplane on + Wi-Fi off (ping unreachable), cold start, add $150 expense | saved; $350; connectivity, Wi-Fi and Bluetooth restored to prior state |
+| Reporting currency ILS→USD→ILS | Summary $202.13 (categories/percent in USD), back to ILS |
+| PDF | share sheet with CashTravel-QA.pdf (dismissed; nothing sent) |
+| Restart | cold start: trip and balances identical |
+| Optional app lock | device has no screen lock → correct explanation, switch stays off |
+- Defects: none in the app. (One operator input error during editing — text inserted before the old value — was corrected through the same edit flow; it exercised edit + history.)
+- **Owner-only pending check:** positive biometric/PIN unlock on a phone with a configured screen lock. The test phone is the owner's personal device without a secure lock; Claude does not change its security settings. The positive path is covered by automated AppLockService/LockGate tests (enable requires auth, relock after 60 s, failed auth keeps lock).
 
