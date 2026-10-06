@@ -36,10 +36,6 @@ export function toDecimalString(d: Decimal): string {
   return `${neg ? '-' : ''}${int}${frac ? `.${frac}` : ''}`;
 }
 
-export function isPositive(d: Decimal): boolean {
-  return d.coef > 0n;
-}
-
 export function pow10(n: number): bigint {
   if (!Number.isInteger(n) || n < 0) throw new Error(`pow10 requires a non-negative integer: ${n}`);
   return 10n ** BigInt(n);

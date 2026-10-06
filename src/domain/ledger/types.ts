@@ -9,8 +9,6 @@ export const TRANSACTION_TYPES = [
 ] as const;
 export type TransactionType = (typeof TRANSACTION_TYPES)[number];
 
-export type PaymentMethod = 'CASH' | 'CARD';
-
 /** When a transaction happened: UTC instant plus the local calendar date/offset fixed at entry. */
 export interface Occurrence {
   readonly occurredAt: string;

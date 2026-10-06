@@ -3,7 +3,6 @@ export type BuiltinCategoryKey = (typeof BUILTIN_CATEGORY_KEYS)[number];
 
 /** Icons a custom category may use (rendered by the UI icon set). */
 export const CATEGORY_ICONS = ['tag', 'food', 'bed', 'bus', 'ticket', 'bag', 'gift', 'heart', 'phone', 'coffee', 'beach', 'dots'] as const;
-export type CategoryIcon = (typeof CATEGORY_ICONS)[number];
 
 export interface Category {
   readonly id: number;

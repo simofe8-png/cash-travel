@@ -33,27 +33,6 @@ export function add(a: Money, b: Money): Money {
   return money(a.minor + b.minor, a.currency);
 }
 
-export function subtract(a: Money, b: Money): Money {
-  sameCurrency(a, b);
-  return money(a.minor - b.minor, a.currency);
-}
-
-export function negate(a: Money): Money {
-  return money(-a.minor, a.currency);
-}
-
-export function sum(items: readonly Money[], currency: string): Money {
-  return items.reduce((acc, m) => add(acc, m), zero(currency));
-}
-
-export function isNegative(a: Money): boolean {
-  return a.minor < 0;
-}
-
-export function isZero(a: Money): boolean {
-  return a.minor === 0;
-}
-
 export type ParseResult =
   | { ok: true; minor: number }
   | { ok: false; error: 'empty' | 'invalid' | 'too_many_decimals' | 'negative_not_allowed' | 'too_large' };

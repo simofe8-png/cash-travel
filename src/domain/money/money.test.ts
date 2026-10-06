@@ -7,10 +7,7 @@ import {
   effectiveRate,
   formatAmount,
   money,
-  negate,
   parseAmount,
-  subtract,
-  sum,
   toMajorString,
 } from './money';
 
@@ -51,9 +48,7 @@ describe('Money', () => {
     // 0.1 + 0.2 as ILS minor units
     expect(add(money(10, 'ILS'), money(20, 'ILS')).minor).toBe(30);
     const many = Array.from({ length: 1000 }, () => money(1, 'USD'));
-    expect(sum(many, 'USD').minor).toBe(1000);
-    expect(subtract(money(85000, 'THB'), money(100000, 'THB')).minor).toBe(-15000);
-    expect(negate(money(5, 'EUR')).minor).toBe(-5);
+    expect(many.reduce((acc, m) => add(acc, m), money(0, 'USD')).minor).toBe(1000);
   });
 
   it('refuses cross-currency arithmetic', () => {

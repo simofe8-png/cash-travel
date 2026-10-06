@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress. Governance reconciliation (supervisor protocol + approved UI pack) — PASS.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 34: Lean Architecture Audit.
+`docs/MASTER_BUILD_PLAN.md` — Step 35: Final Repository Hygiene & Clean Verification.
 
 ## Last completed build step
-Step 33 — Final V1 handoff — PASS.
+Step 34 — Lean Architecture Audit — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -212,6 +212,11 @@ Physical Galaxy A54, Android 16, Hebrew/RTL, font scale 1.3, Expo Go 57.0.9 (Met
 - Updated: README (V1 status, document map, quick start), ARCHITECTURE (implementation map), FINANCIAL_DOMAIN (implementation notes), SECURITY (implementation status + release manifest), TESTING (where each suite lives), ADR index (0001–0010). Known limitations and accepted risks: `docs/release/READINESS-V1.md`. Operations: `docs/ENVIRONMENT.md` (dev/device) and `docs/release/LOCAL_BUILD.md` (RC build). The user's governance text in these documents is unchanged; only sections were appended.
 - Recovery check: a new session following CLAUDE.md's reading order reaches this file, whose step log records every decision, command and evidence; no chat history is needed.
 - V1 checkpoint: the final Step 35 commit, tagged `v1.0.0` locally (not pushed).
+
+### Step 34 — Lean Architecture Audit — PASS (2026-10-06)
+- Report: `docs/release/LEAN_AUDIT-V1.md` (19 runtime deps each justified, incl. required router/icon peers; ports/services/useQuery kept with reasons; runtime checks: no background work/analytics, offline save path, bounded startup, indexed per-trip queries).
+- Removed dead code: `subtract`, `negate`, `sum`, `isNegative`, `isZero`, `isPositive`, types `PaymentMethod`, `CategoryIcon` (no production references; exact-addition test kept via `add`). Dependencies removed: none (none unused).
+- Evidence: dependency import/peer scan; exported-symbol reference scan; `npm run verify` → lint 0, typecheck clean, 352/352.
 
 ## Owner-only items (not blockers for V1 completion)
 1. Positive app-lock unlock on a phone with a configured screen lock (automated tests cover it).
