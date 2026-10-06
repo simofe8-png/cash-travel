@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 7: Opening balances & trip lifecycle.
+`docs/MASTER_BUILD_PLAN.md` — Step 8: Expense Engine.
 
 ## Last completed build step
-Step 6 — Ledger Engine — PASS.
+Step 7 — Opening balances & trip lifecycle — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -50,3 +50,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: src/domain/ledger (types, validateDraft, cashEffects, isExpense); LedgerRepository port; SqliteLedgerRepository (atomic record/revise/softDelete/setActualCharge, derived balances, revisioned immutable entries, history snapshots, actual charge preserved across edits, integrity audit); architecture guard test (sole writer of financial tables; no stored balance).
 - Evidence: `npm run verify` → 115/115. Includes the full FINANCIAL_DOMAIN worked example, negative cash, injected failures (CHECK after entries written, 2nd FX leg I/O failure, history write failure) leaving zero effect, edits/soft delete/history, 5×60-step randomized model check of the balance equation, tamper detection. Guard probe: a file with `UPDATE ledger_entries` made the guard fail; removed.
 - Correction: the guard regex initially lost its backslashes (template literal) and passed vacuously — found by the probe, fixed with String.raw.
+
+### Step 7 — Opening balances & trip lifecycle — PASS (2026-10-06)
+- Implemented: src/domain/time (local-date/occurrence helpers), src/domain/trip (validation, status, day count/number, elapsed days, default trip choice); ports Clock, UnitOfWork, TripRepository; SqliteTripRepository, SqliteUnitOfWork; TripService (createTrip atomic with openings, updateTripDetails, setOpeningBalances via ledger revisions, list/get/current/select).
+- Evidence: `npm run verify` → 134/134. Trip creation atomic incl. injected mid-write failure; detail edits leave transactions & ledger entries byte-identical; opening balance changes produce EDIT/DELETE/CREATE history; current/upcoming/completed + selection + fallback; device-offset date boundary.

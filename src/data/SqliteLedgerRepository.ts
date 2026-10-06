@@ -10,7 +10,7 @@ import {
   type TransactionDraft,
   type WalletBalance,
 } from '../domain/ledger';
-import { money } from '../domain/money';
+import { money, type Money } from '../domain/money';
 import { inTransaction } from './db/transaction';
 
 export interface TransactionRow {
@@ -262,6 +262,15 @@ export class SqliteLedgerRepository implements LedgerRepository {
       draft: rowToDraft(r),
       cardCharge: cc ? rowToCardCharge(cc) : null,
     };
+  }
+
+  openingBalances(tripId: number): { id: number; amount: Money }[] {
+    return this.db
+      .all<{ id: number; amount_minor: number; currency: string }>(
+        "SELECT id, amount_minor, currency FROM transactions WHERE trip_id = ? AND type = 'OPENING_BALANCE' AND deleted_at IS NULL ORDER BY id",
+        [tripId],
+      )
+      .map((r) => ({ id: r.id, amount: money(r.amount_minor, r.currency) }));
   }
 
   balances(tripId: number): WalletBalance[] {

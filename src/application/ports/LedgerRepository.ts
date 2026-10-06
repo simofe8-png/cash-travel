@@ -4,6 +4,7 @@ import type {
   TransactionDraft,
   WalletBalance,
 } from '../../domain/ledger';
+import type { Money } from '../../domain/money';
 
 /**
  * The Ledger Engine's persistence contract — the only way financial state is created or changed.
@@ -18,6 +19,8 @@ export interface LedgerRepository {
   /** Records (or clears with null) the actual card charge. Never touches cash. */
   setActualCharge(id: number, actualMinor: number | null): void;
   get(id: number): StoredTransaction | undefined;
+  /** Active opening-balance transactions of a trip (at most one per currency by use-case rule). */
+  openingBalances(tripId: number): { id: number; amount: Money }[];
   balances(tripId: number): WalletBalance[];
   /** Integrity audit: returns ids of active transactions whose active entries differ from their derived effects. */
   findInconsistencies(tripId: number): number[];

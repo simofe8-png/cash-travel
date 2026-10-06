@@ -47,3 +47,17 @@ export const at = (localDate = '2026-11-02', occurredAt = T0, tzOffsetMin = 420)
   occurredLocalDate: localDate,
   tzOffsetMin,
 });
+
+/** Mutable test clock implementing the Clock port. */
+export class FakeClock {
+  constructor(
+    public instant = T0,
+    public offset = 420,
+  ) {}
+  now = () => this.instant;
+  offsetMinutes = () => this.offset;
+  set(instant: string, offset = this.offset) {
+    this.instant = instant;
+    this.offset = offset;
+  }
+}
