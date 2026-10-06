@@ -9,6 +9,7 @@ import { money } from '../../domain/money';
 import { localDateOf, localTimeOf } from '../../domain/time';
 import { useApp, useQuery } from '../AppContext';
 import { AmountInput } from '../components/pickers';
+import { ReceiptSection } from '../components/ReceiptSection';
 import { AppText, Banner, Button, Card, Divider, EmptyState, Icon, MoneyText, Row, Screen, SectionTitle } from '../components/primitives';
 import { formatDate, formatMoney, formatRate, plainAmount } from '../format';
 import { categoryLabel, he } from '../i18n/he';
@@ -236,6 +237,7 @@ export function ActionDetailsScreen() {
       </Card>
 
       {tx.cardCharge && !deleted ? <CardChargeSection key={`${tx.id}-${tx.revision}`} id={tx.id} charge={tx.cardCharge} onSaved={notifyChanged} /> : null}
+      {!deleted && d.type !== 'OPENING_BALANCE' ? <ReceiptSection transactionId={tx.id} /> : null}
 
       <SectionTitle title="היסטוריית שינויים" />
       <Card testID="details-history">

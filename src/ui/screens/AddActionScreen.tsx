@@ -1,6 +1,6 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useMemo, useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Alert, Image, Pressable, StyleSheet, View } from 'react-native';
 
 import type { ExpensePayment, Occurrence, StoredTransaction, TransactionType } from '../../domain/ledger';
 import { exchangeRateView } from '../../domain/fx';
@@ -177,6 +177,8 @@ export function AddActionScreen() {
   const [otherCurrency, setOtherCurrency] = useState(pre?.otherCurrency ?? (ctx?.trip.reportingCurrency === startCurrency ? 'USD' : (ctx?.trip.reportingCurrency ?? 'ILS')));
   // ATM
   const [feeText, setFeeText] = useState(pre?.feeText ?? '');
+  // Receipt captured before saving; attached right after the action is saved.
+  const [receiptUri, setReceiptUri] = useState<string | null>(null);
   const [atmCard, setAtmCard] = useState<number | null>(pre?.atmCard !== undefined ? pre.atmCard : ctx?.defaults.payment.method === 'CARD' ? ctx.defaults.payment.cardId : null);
 
   const editing = editId !== null && pre !== null;
@@ -200,7 +202,14 @@ export function AddActionScreen() {
     return occurrenceAtLocal(date, /^\d{2}:\d{2}$/.test(time) ? time : '12:00', services.tripService.offsetMinutes());
   }
 
+  async function captureReceipt() {
+    const r = await services.receiptService.capture();
+    if (r.status === 'denied') Alert.alert('אין גישה למצלמה', 'כדי לצלם קבלה צריך לאשר גישה למצלמה. אפשר לאשר בהגדרות המכשיר.');
+    if (r.status === 'captured') setReceiptUri(r.uri);
+  }
+
   function save() {
+    let newId: number | null = null;
     setShowErrors(true);
     const errs: string[] = [];
     try {
@@ -216,7 +225,7 @@ export function AddActionScreen() {
         if (errs.length) return setErrors(errs);
         const input = { tripId, amount: main.value!, categoryId: categoryId!, payment, occurrence: when(), description, place, note, chargedIn };
         if (editing) services.expenseService.editExpense(editId, input);
-        else services.expenseService.addExpense(input);
+        else newId = services.expenseService.addExpense(input);
       } else if (mode === 'FX_EXCHANGE') {
         if (main.error) errs.push(`נתתי: ${main.error}`);
         if (other.error) errs.push(`קיבלתי: ${other.error}`);
@@ -224,7 +233,7 @@ export function AddActionScreen() {
         if (errs.length) return setErrors(errs);
         const input = { tripId, given: main.value!, received: other.value!, occurrence: when(), place, note };
         if (editing) services.fxService.editExchange(editId, input);
-        else services.fxService.exchange(input);
+        else newId = services.fxService.exchange(input);
       } else if (mode === 'ATM_WITHDRAWAL') {
         if (main.error) errs.push(main.error);
         const fee = feeText.trim() ? readAmount(feeText, currency, true) : { value: null, error: null };
@@ -232,7 +241,7 @@ export function AddActionScreen() {
         if (errs.length) return setErrors(errs);
         const input = { tripId, received: main.value!, fee: fee.value, cardId: atmCard, occurrence: when(), place, note };
         if (editing) services.atmService.editWithdrawal(editId, input);
-        else services.atmService.withdraw(input);
+        else newId = services.atmService.withdraw(input);
       } else if (editing) {
         if (!delta) return setErrors(['נא להזין תיקון שונה מאפס (אפשר עם מינוס)']);
         services.reconciliationService.editAdjustment(editId, { tripId, delta, note, occurrence: when() });
@@ -240,6 +249,9 @@ export function AddActionScreen() {
         if (counted.error) errs.push(counted.error);
         if (errs.length) return setErrors(errs);
         if (diff && diff.minor !== 0) services.reconciliationService.reconcile({ tripId, counted: counted.value!, note });
+      }
+      if (newId !== null && receiptUri) {
+        services.receiptService.attach(newId, receiptUri).then(notifyChanged, () => Alert.alert('הפעולה נשמרה', 'אבל הקבלה לא נשמרה. אפשר לצלם שוב מפרטי הפעולה.'));
       }
       notifyChanged();
       if (router.canGoBack()) router.back();
@@ -385,6 +397,12 @@ export function AddActionScreen() {
         {mode === 'EXPENSE' ? <Field label="תיאור" value={description} onChangeText={setDescription} maxLength={120} placeholder="למשל: ארוחת ערב" testID="add-description" /> : null}
         <Field label="מקום" value={place} onChangeText={setPlace} maxLength={120} placeholder="למשל: צ׳יאנג מאי" testID="add-place" />
         <Field label="הערה" value={note} onChangeText={setNote} maxLength={500} multiline testID="add-note" />
+        {!editing ? (
+          <View style={{ gap: space.xs }}>
+            <Button compact tone="secondary" icon="camera-outline" label={receiptUri ? 'החלפת הקבלה' : 'צילום קבלה'} onPress={captureReceipt} testID="add-receipt" />
+            {receiptUri ? <Image source={{ uri: receiptUri }} style={{ width: '100%', height: 140, borderRadius: radius.sm }} resizeMode="cover" testID="add-receipt-thumb" /> : null}
+          </View>
+        ) : null}
         {mode === 'EXPENSE' && payment.method === 'CARD' ? (
           <Card>
             <Pressable onPress={() => setDcc((v) => !v)} accessibilityRole="checkbox" accessibilityState={{ checked: dcc }} testID="add-dcc">

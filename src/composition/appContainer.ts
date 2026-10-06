@@ -1,4 +1,5 @@
 import type { Clock } from '../application/ports/Clock';
+import { ExpoReceiptStore, expoReceiptCamera } from '../infrastructure/files/ExpoReceiptStore';
 import { CurrencyApiProvider } from '../infrastructure/fx/CurrencyApiProvider';
 import { FrankfurterProvider } from '../infrastructure/fx/FrankfurterProvider';
 import type { FetchLike } from '../infrastructure/fx/http';
@@ -18,7 +19,17 @@ export function getAppServices(): AppServices {
   if (!instance) {
     const { db } = openAppDatabase();
     const fetchFn = globalThis.fetch as unknown as FetchLike;
-    instance = createServices(db, deviceClock, [new FrankfurterProvider(fetchFn), new CurrencyApiProvider(fetchFn)]);
+    instance = createServices(db, deviceClock, {
+      fxProviders: [new FrankfurterProvider(fetchFn), new CurrencyApiProvider(fetchFn)],
+      receiptStore: new ExpoReceiptStore(),
+      receiptCamera: expoReceiptCamera,
+    });
+    try {
+      // Bounded startup reconciliation of receipt files (never touches financial data).
+      instance.receiptService.cleanup();
+    } catch {
+      // Non-critical; retried next start.
+    }
   }
   return instance;
 }

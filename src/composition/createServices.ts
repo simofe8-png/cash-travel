@@ -8,8 +8,10 @@ import { FxExchangeService } from '../application/fx/FxExchangeService';
 import { FxRateService } from '../application/fx/FxRateService';
 import type { Clock } from '../application/ports/Clock';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
+import type { ReceiptCamera, ReceiptStore } from '../application/ports/ReceiptStore';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
 import { JournalService } from '../application/journal/JournalService';
+import { ReceiptService } from '../application/receipts/ReceiptService';
 import { ReportingService } from '../application/reporting/ReportingService';
 import { TransactionService } from '../application/transactions/TransactionService';
 import { TripService } from '../application/trips/TripService';
@@ -20,12 +22,19 @@ import { SqliteCategoryRepository } from '../data/SqliteCategoryRepository';
 import { SqliteFxRateRepository } from '../data/SqliteFxRateRepository';
 import { SqliteJournalQueries } from '../data/SqliteJournalQueries';
 import { SqliteLedgerRepository } from '../data/SqliteLedgerRepository';
+import { SqliteReceiptRepository } from '../data/SqliteReceiptRepository';
 import { SqliteReportingQueries } from '../data/SqliteReportingQueries';
 import { SqliteTripRepository } from '../data/SqliteTripRepository';
 import { SqliteUnitOfWork } from '../data/SqliteUnitOfWork';
 
 /** Wires repositories and use-cases over a migrated database. Shared by the app and tests. */
-export function createServices(db: SqlDatabase, clock: Clock, providers: readonly FxRateProvider[]) {
+export interface PlatformAdapters {
+  readonly fxProviders: readonly FxRateProvider[];
+  readonly receiptStore: ReceiptStore;
+  readonly receiptCamera: ReceiptCamera;
+}
+
+export function createServices(db: SqlDatabase, clock: Clock, platform: PlatformAdapters) {
   const ledger = new SqliteLedgerRepository(db, clock.now);
   const trips = new SqliteTripRepository(db, clock.now);
   const categories = new SqliteCategoryRepository(db, clock.now);
@@ -34,9 +43,13 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
   const cardRules = new SqliteCardRuleRepository(db);
   const uow = new SqliteUnitOfWork(db);
 
-  const fxRateService = new FxRateService(fxRates, providers, clock);
+  const fxRateService = new FxRateService(fxRates, platform.fxProviders, clock);
   const cardCostService = new CardCostService(cards, cardRules, fxRateService, clock);
   cardCostService.installRuleSet(BUNDLED_CARD_RULE_SET);
+  const transactionService = new TransactionService(ledger, uow);
+  const receiptService = new ReceiptService(new SqliteReceiptRepository(db), platform.receiptStore, platform.receiptCamera, uow, clock);
+  // Deleting an action also deletes its receipt photo (privacy); runs after the delete commits.
+  transactionService.addDeleteHook((id) => receiptService.remove(id));
   const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
 
   return {
@@ -58,7 +71,8 @@ export function createServices(db: SqlDatabase, clock: Clock, providers: readonl
     reconciliationService: new ReconciliationService(ledger, uow, clock),
     journalService: new JournalService(new SqliteJournalQueries(db), reportingService),
     reportingService,
-    transactionService: new TransactionService(ledger, uow),
+    transactionService,
+    receiptService,
   };
 }
 

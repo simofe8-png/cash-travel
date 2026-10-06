@@ -17,7 +17,7 @@ export class ActualChargeError extends Error {
 
 /** Action Details use-cases: read, record the actual card charge, soft delete. */
 export class TransactionService {
-  /** Extra steps run inside the delete unit of work (e.g. receipt cleanup, Step 23). */
+  /** Non-financial cleanup run after a delete commits (e.g. removing the receipt photo). */
   private readonly onDelete: ((id: number) => void)[] = [];
 
   constructor(
@@ -45,10 +45,14 @@ export class TransactionService {
 
   /** Soft delete: immediately removes the action from balances, Journal and reports; history kept. */
   delete(id: number): void {
-    this.uow.run(() => {
-      this.ledger.softDelete(id);
-      for (const hook of this.onDelete) hook(id);
-    });
+    this.uow.run(() => this.ledger.softDelete(id));
+    for (const hook of this.onDelete) {
+      try {
+        hook(id);
+      } catch {
+        // Cleanup failures never undo a committed delete; startup cleanup reconciles leftovers.
+      }
+    }
   }
 
   addDeleteHook(hook: (id: number) => void): void {

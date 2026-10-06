@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 23: Receipt camera & private-file lifecycle.
+`docs/MASTER_BUILD_PLAN.md` — Step 24: Optional device authentication.
 
 ## Last completed build step
-Step 22 — Screen 7 — Settings & trip/card configuration — PASS.
+Step 23 — Receipt camera & private-file lifecycle — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -128,3 +128,7 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 22 — Screen 7: Settings & trip/card configuration — PASS (2026-10-06)
 - Implemented: SettingsScreen (trip edit entry → Trip Setup, reporting-currency picker, new trip, card list + CardSheet [issuer, optional nickname, one fee classification UNKNOWN/NO_FOREIGN_FEE/FEE_PERCENT, billing currency, archive], CategoriesSheet [create/rename/icon, delete with reassignment to Other], privacy note). App lock and PDF entries are added by Steps 24/25.
 - Evidence: `npm run verify` → 293/293 incl. 6 Settings UI tests (card row has only identity columns; invalid fee % rejected; reporting-currency change leaves transactions identical; category delete reassigns via ledger; edit-trip entry; exactly seven screen routes). Physical A54: Isracard "no FX fee" card added through the sheet, listed RTL.
+
+### Step 23 — Receipt camera & private-file lifecycle — PASS (2026-10-06)
+- Implemented: expo-image-picker + expo-file-system (SDK-matched); ports ReceiptStore/ReceiptCamera; SqliteReceiptRepository; ReceiptService (attach/replace/remove/cleanup, capture); ExpoReceiptStore + expoReceiptCamera; delete hook (after commit); startup cleanup; ReceiptSection (Action Details) and capture-before-save in Add Action; app.json image-picker plugin (no microphone) + blockedPermissions. ADR-0008.
+- Evidence: `npm run verify` → 305/305 (incl. 9 lifecycle + 3 receipt UI tests). Physical A54: on-demand permission dialog, real capture, thumbnail, persistence across cold restart, preview, delete. Limitation: Expo Go is not debuggable, so private files were not listed on-device; DB/file consistency is proven by tests.
