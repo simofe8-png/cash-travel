@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 10: ATM Withdrawal Engine.
+`docs/MASTER_BUILD_PLAN.md` — Step 11: Cash Adjustment & reconciliation.
 
 ## Last completed build step
-Step 9 — FX Exchange Engine — PASS.
+Step 10 — ATM Withdrawal Engine — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -64,3 +64,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: src/domain/fx/exchange.ts (exchangeRateView: both directions, 8 dp, natural ≥1 display direction); FxExchangeService (exchange/editExchange via Ledger).
 - Evidence: `npm run verify` → 159/159. Both wallets change atomically (2nd-leg injected failure → no change); received wallet auto-created; never isExpense; same-currency/zero/unsupported rejected; edit replaces both legs; precision across exponents (ILS/JPY/JOD/IDR).
 - Decision: the actual given/received amounts are the persisted snapshot of an exchange; the effective rate is derived on read (no redundant stored rate). Reference-rate snapshots belong to Step 12.
+
+### Step 10 — ATM Withdrawal Engine — PASS (2026-10-06)
+- Implemented: src/domain/atm (atmCardDebit = principal + fee, atmFeeCost = fee only); AtmService (withdraw/editWithdrawal); every ATM withdrawal is card-funded (card optional/unspecified) and carries a card_charges row with the known local-currency debit; estimate UNAVAILABLE until the Card Cost Engine (Step 13); actual entered via setActualCharge.
+- Evidence: `npm run verify` → 166/166. Principal +only its wallet (USD/ILS untouched), not isExpense, fee never touches cash, debit = principal+fee, zero fee normalized to none, actual separate and cash-neutral, edit preserves actual, invalid fee currency/amount/card rejected, soft delete removes cash.
+- Decision: the local ATM fee is a trip cost (reported separately as ATM fees; reporting ADR at Step 14), never an EXPENSE transaction and never a cash effect.

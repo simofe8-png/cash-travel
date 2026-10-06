@@ -166,9 +166,9 @@ function rowToCardCharge(r: CardChargeRow): CardCharge {
   };
 }
 
-/** Whether a draft is paid/funded by a card and can therefore carry a card charge. */
+/** Whether a draft is paid/funded by a card (ATM withdrawals always are) and may carry a card charge. */
 function cardFunded(d: TransactionDraft): boolean {
-  return (d.type === 'EXPENSE' && d.payment.method === 'CARD') || (d.type === 'ATM_WITHDRAWAL' && d.cardId !== null);
+  return (d.type === 'EXPENSE' && d.payment.method === 'CARD') || d.type === 'ATM_WITHDRAWAL';
 }
 
 /**
