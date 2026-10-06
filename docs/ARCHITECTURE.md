@@ -39,3 +39,7 @@ RTL is designed from first implementation. Mixed Hebrew/Latin, currency symbols,
 
 ## Implementation layout (Step 2)
 See ADR-0001. `src/domain` (pure engines) ← `src/application` (use-cases + ports) ← `src/data` (SQLite repositories) / `src/infrastructure` (platform adapters) ← `src/composition` (wiring). `src/ui` and `src/app` (routes) call application use-cases only. Direction is enforced by ESLint `no-restricted-imports`.
+
+## Ledger Engine (Step 6)
+- Domain rules: `src/domain/ledger/` — draft types per transaction type, `validateDraft`, `cashEffects` (the only definition of each type's cash semantics), `isExpense`.
+- Persistence: `src/data/SqliteLedgerRepository.ts` behind the `LedgerRepository` port — the **sole writer** of `transactions`, `ledger_entries`, `card_charges`, `transaction_history` (guarded by `src/architecture.test.ts`). Every operation (`record`, `revise`, `softDelete`, `setActualCharge`) is one SQLite transaction. Balances are derived by SQL from active-revision entries of non-deleted parents; `findInconsistencies` audits entries against `cashEffects`.
