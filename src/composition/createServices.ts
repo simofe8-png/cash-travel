@@ -8,10 +8,12 @@ import { FxExchangeService } from '../application/fx/FxExchangeService';
 import { FxRateService } from '../application/fx/FxRateService';
 import type { Clock } from '../application/ports/Clock';
 import type { DeviceAuth } from '../application/ports/DeviceAuth';
+import type { PdfExporter } from '../application/ports/PdfExporter';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { ReceiptCamera, ReceiptStore } from '../application/ports/ReceiptStore';
 import type { SqlDatabase } from '../application/ports/SqlDatabase';
 import { JournalService } from '../application/journal/JournalService';
+import { TripReportService } from '../application/report/TripReportService';
 import { ReceiptService } from '../application/receipts/ReceiptService';
 import { ReportingService } from '../application/reporting/ReportingService';
 import { AppLockService } from '../application/security/AppLockService';
@@ -35,6 +37,7 @@ export interface PlatformAdapters {
   readonly receiptStore: ReceiptStore;
   readonly receiptCamera: ReceiptCamera;
   readonly deviceAuth: DeviceAuth;
+  readonly pdfExporter: PdfExporter;
 }
 
 export function createServices(db: SqlDatabase, clock: Clock, platform: PlatformAdapters) {
@@ -55,6 +58,11 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
   transactionService.addDeleteHook((id) => receiptService.remove(id));
   const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
 
+  const tripService = new TripService(trips, ledger, uow, clock);
+  const categoryService = new CategoryService(categories, ledger, uow);
+  const cardService = new CardService(cards);
+  const journalService = new JournalService(new SqliteJournalQueries(db), reportingService);
+
   return {
     ledger,
     trips,
@@ -65,14 +73,15 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
     uow,
     fxRateService,
     cardCostService,
-    cardService: new CardService(cards),
-    tripService: new TripService(trips, ledger, uow, clock),
+    cardService,
+    tripService,
     expenseService: new ExpenseService(ledger, trips, categories, cards, uow, clock, cardCostService),
-    categoryService: new CategoryService(categories, ledger, uow),
+    categoryService,
     fxService: new FxExchangeService(ledger, uow, clock),
     atmService: new AtmService(ledger, cards, uow, clock, cardCostService),
     reconciliationService: new ReconciliationService(ledger, uow, clock),
-    journalService: new JournalService(new SqliteJournalQueries(db), reportingService),
+    journalService,
+    tripReportService: new TripReportService(tripService, reportingService, journalService, categoryService, cardService, platform.pdfExporter, clock),
     reportingService,
     transactionService,
     receiptService,

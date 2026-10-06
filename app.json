@@ -52,7 +52,8 @@
           "cameraPermission": "המצלמה משמשת רק לצילום קבלות שתבחרו לצרף לפעולה.",
           "microphonePermission": false
         }
-      ]
+      ],
+      "expo-sharing"
     ],
     "scheme": "cashtravel",
     "experiments": {

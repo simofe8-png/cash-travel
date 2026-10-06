@@ -8,6 +8,7 @@ import { CurrencyPicker } from '../components/pickers';
 import { AppText, Card, Divider, Icon, Screen, SectionTitle, type IconName } from '../components/primitives';
 import { formatRange, ltr } from '../format';
 import { he } from '../i18n/he';
+import { renderTripReportHtml } from '../report/reportHtml';
 import { colors, space, touch } from '../theme/tokens';
 import { CardSheet, CategoriesSheet } from './SettingsSheets';
 
@@ -37,8 +38,22 @@ export function SettingsScreen() {
   const [cardSheet, setCardSheet] = useState<CardModel | 'new' | null>(null);
   const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [lockOn, setLockOn] = useState(() => services.appLockService.isEnabled());
+  const [exporting, setExporting] = useState(false);
   const trip = data.trip;
   if (!trip) return null;
+
+  const exportPdf = async () => {
+    setExporting(true);
+    try {
+      const r = await services.tripReportService.share(trip.id, renderTripReportHtml);
+      if (r === 'sharing_unavailable') Alert.alert('לא ניתן לשתף', 'שיתוף קבצים אינו זמין במכשיר הזה.');
+    } catch (e) {
+      console.warn('PDF export failed:', (e as Error).message);
+      Alert.alert('הדוח לא נוצר', 'נסו שוב.');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const toggleLock = async (want: boolean) => {
     if (want) {
@@ -88,6 +103,17 @@ export function SettingsScreen() {
       <SectionTitle title="הוצאות" />
       <Card>
         <SettingsRow icon="shape-outline" title="קטגוריות" subtitle="הוספה, שינוי שם ומחיקה של קטגוריות אישיות" onPress={() => setCategoriesOpen(true)} testID="settings-categories" />
+      </Card>
+
+      <SectionTitle title="דוח" />
+      <Card>
+        <SettingsRow
+          icon="file-pdf-box"
+          title={exporting ? 'מכין דוח…' : 'ייצוא דוח טיול (PDF)'}
+          subtitle="לשמירה ב-Drive או בקבצים, או לשליחה בוואטסאפ ובמייל. דוח לסיכום בלבד — לא גיבוי."
+          onPress={exporting ? undefined : exportPdf}
+          testID="settings-export"
+        />
       </Card>
 
       <SectionTitle title="פרטיות" />

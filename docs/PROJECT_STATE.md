@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 25: Professional PDF trip report.
+`docs/MASTER_BUILD_PLAN.md` — Step 26: Offline & lifecycle hardening.
 
 ## Last completed build step
-Step 24 — Optional device authentication — PASS.
+Step 25 — Professional PDF trip report — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -137,3 +137,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 - Implemented: expo-local-authentication (biometrics with device-credential fallback; no custom PIN); DeviceAuth port + expoDeviceAuth; AppLockService (enable/disable require auth; locks at cold start and after ≥60 s in background; unavailable device auth never locks the owner out); LockGate overlay in the root layout; Settings switch.
 - Evidence: `npm run verify` → 315/315 incl. 7 AppLockService + 3 LockGate tests (off by default, enable needs success, cannot enable without device security, re-lock threshold, failed auth keeps lock, recovery when auth disappears, disable needs auth). Physical A54 (Expo Go): toggling showed the "no screen lock on device" explanation and the switch stayed off; `adb shell locksettings verify` confirms the phone has no secure credential, so this is the correct real behavior.
 - Pending owner check (Step 30): positive unlock with the owner's real fingerprint/PIN needs the owner to set a device screen lock — not changed by Claude on a personal phone.
+
+### Step 25 — Professional PDF trip report — PASS (2026-10-06)
+- Implemented: expo-print + expo-sharing; PdfExporter port + expoPdfExporter (base64 → named cache file → share sheet; old reports cleaned before export and at startup); TripReportService; Hebrew RTL A4 template with escaping; Settings export entry. ADR-0009.
+- Evidence: `npm run verify` → 319/319 (4 report tests). Physical A54: share sheet with CashTravel-Thailand.pdf (not sent to anyone). Headless-Edge rendering of the template inspected; totals/averages/daily totals/wallets hand-checked.
+- Fix found on device: moving the printer output failed in Expo Go ("Missing READ permission") → write from base64 into our cache.

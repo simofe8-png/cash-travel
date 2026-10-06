@@ -52,3 +52,16 @@ export class FakeDeviceAuth {
     return this.results.shift() ?? 'success';
   }
 }
+
+/** Captures exported report HTML instead of printing/sharing. */
+export class FakePdfExporter {
+  exports: { html: string; fileName: string }[] = [];
+  cleanups = 0;
+  async exportAndShare(html: string, fileName: string) {
+    this.exports.push({ html, fileName });
+    return 'shared' as const;
+  }
+  cleanup() {
+    this.cleanups++;
+  }
+}

@@ -1,6 +1,7 @@
 import type { Clock } from '../application/ports/Clock';
 import { expoDeviceAuth } from '../infrastructure/auth/ExpoDeviceAuth';
 import { ExpoReceiptStore, expoReceiptCamera } from '../infrastructure/files/ExpoReceiptStore';
+import { expoPdfExporter } from '../infrastructure/pdf/ExpoPdfExporter';
 import { CurrencyApiProvider } from '../infrastructure/fx/CurrencyApiProvider';
 import { FrankfurterProvider } from '../infrastructure/fx/FrankfurterProvider';
 import type { FetchLike } from '../infrastructure/fx/http';
@@ -25,10 +26,12 @@ export function getAppServices(): AppServices {
       receiptStore: new ExpoReceiptStore(),
       receiptCamera: expoReceiptCamera,
       deviceAuth: expoDeviceAuth,
+      pdfExporter: expoPdfExporter,
     });
     try {
       // Bounded startup reconciliation of receipt files (never touches financial data).
       instance.receiptService.cleanup();
+      expoPdfExporter.cleanup();
     } catch {
       // Non-critical; retried next start.
     }
