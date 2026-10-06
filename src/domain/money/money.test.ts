@@ -70,6 +70,10 @@ describe('parseAmount', () => {
     ['850', 'THB', 85000],
     ['850.5', 'THB', 85050],
     ['850,50', 'THB', 85050],
+    ['12,5', 'EUR', 1250],
+    ['7,000', 'THB', 700000],
+    ['1,000', 'USD', 100000],
+    ['1,000', 'JOD', 1000000],
     ['1,234.56', 'USD', 123456],
     ['1,234,567', 'ILS', 123456700],
     ['0.01', 'EUR', 1],
@@ -86,8 +90,9 @@ describe('parseAmount', () => {
   it('never silently rounds user input', () => {
     expect(parseAmount('1.005', 'USD')).toEqual({ ok: false, error: 'too_many_decimals' });
     expect(parseAmount('500.5', 'JPY')).toEqual({ ok: false, error: 'too_many_decimals' });
-    // A lone comma is a decimal separator; "1,000" in USD is therefore rejected, not read as 1000 or 1.
-    expect(parseAmount('1,000', 'USD')).toEqual({ ok: false, error: 'too_many_decimals' });
+    // Ambiguous comma forms are rejected rather than guessed.
+    expect(parseAmount('1,0000', 'USD')).toEqual({ ok: false, error: 'invalid' });
+    expect(parseAmount('1,00,000', 'USD')).toEqual({ ok: false, error: 'invalid' });
   });
 
   it.each(['', '   ', 'abc', '1.2.3', '12a', '1,23.4', '--5', '1e5', 'NaN', 'Infinity'])(

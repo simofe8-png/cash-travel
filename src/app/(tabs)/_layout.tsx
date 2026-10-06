@@ -1,5 +1,6 @@
 import { Redirect, Tabs, router } from 'expo-router';
 import { Pressable, StyleSheet, View, type ColorValue } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useQuery } from '../../ui/AppContext';
 import { Icon, type IconName } from '../../ui/components/primitives';
@@ -12,6 +13,7 @@ const icon = (name: IconName) =>
   };
 
 export default function TabsLayout() {
+  const insets = useSafeAreaInsets();
   const hasTrip = useQuery((s) => s.tripService.currentTrip() !== undefined);
   if (!hasTrip) return <Redirect href="/trip-setup" />;
   return (
@@ -20,7 +22,7 @@ export default function TabsLayout() {
         headerShown: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.inkMuted,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line, height: 64, paddingBottom: 8 },
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.line, height: 64 + insets.bottom, paddingBottom: 8 + insets.bottom },
         tabBarLabelStyle: { fontSize: 12 },
       }}>
       <Tabs.Screen name="index" options={{ title: he.tabs.home, tabBarIcon: icon('home-outline') }} />

@@ -14,7 +14,7 @@ import {
   type TextStyle,
   type ViewStyle,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import type { Money } from '../../domain/money';
 import { formatMoney } from '../format';
@@ -60,6 +60,7 @@ export function Icon({ name, size = 22, color = colors.ink, directional }: { nam
 
 export function Screen(props: { children: ReactNode; scroll?: boolean; padded?: boolean; footer?: ReactNode; testID?: string }) {
   const { scroll = true, padded = true } = props;
+  const insets = useSafeAreaInsets();
   const content = <View style={[padded && styles.padded, styles.gap]}>{props.children}</View>;
   return (
     <SafeAreaView style={styles.screen} edges={['top']} testID={props.testID}>
@@ -70,7 +71,7 @@ export function Screen(props: { children: ReactNode; scroll?: boolean; padded?: 
       ) : (
         <View style={styles.flex}>{content}</View>
       )}
-      {props.footer ? <View style={styles.footer}>{props.footer}</View> : null}
+      {props.footer ? <View style={[styles.footer, { paddingBottom: insets.bottom + space.md }]}>{props.footer}</View> : null}
     </SafeAreaView>
   );
 }

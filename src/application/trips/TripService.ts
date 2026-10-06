@@ -53,6 +53,15 @@ export class TripService {
     this.trips.updateDetails(id, details);
   }
 
+  /** Trip Setup "save" in edit mode: details and opening balances change together or not at all. */
+  updateTrip(id: number, details: TripDetails, openingBalances: readonly Money[]): void {
+    this.validate(details, openingBalances);
+    this.uow.run(() => {
+      this.trips.updateDetails(id, details);
+      this.setOpeningBalances(id, openingBalances);
+    });
+  }
+
   /**
    * Reconciles the opening balances with the desired list through the Ledger: changed amounts are
    * revised (auditable), new currencies recorded, removed currencies soft-deleted. Atomic.

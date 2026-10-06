@@ -19,8 +19,10 @@ currency exponent, an exact/scaled decimal FX layer, and rounding only at final 
   carry no intermediate rounding.
 - Effective FX rate is a derived display value (`effectiveRate`, 8 dp, half-up); the actual given/received
   amounts remain the authoritative facts.
-- Input parsing is strict: never rounds user input (more decimals than the exponent → error); a lone comma is a
-  decimal separator; grouping commas accepted only in valid 3-digit groups; bidi/space characters ignored.
+- Input parsing is strict: never rounds user input (more decimals than the exponent → error); commas forming
+  valid 3-digit groups are thousands separators ("7,000" = 7000, Israeli convention); a single comma followed by
+  1–2 digits is a decimal comma ("12,5"); any other comma form is rejected; bidi/space characters ignored.
+  (Amended in Step 16: the first version read a lone comma as decimal, which rejected "7,000" — found by a UI test.)
 - Display formatting is string-based from integers (no `Intl`/float path).
 
 ## Alternatives considered

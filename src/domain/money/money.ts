@@ -60,7 +60,7 @@ export type ParseResult =
 
 /**
  * Parses user-typed amount text into minor units, exactly. Accepts "1234", "1234.5", "1,234.50",
- * "1234,5" (a lone comma is a decimal separator). Rejects more fractional digits than the currency
+ * "1234,5" (decimal comma), "7,000" (thousands grouping). Rejects more fractional digits than the currency
  * allows instead of silently rounding user input.
  */
 export function parseAmount(text: string, currency: string, opts: { allowNegative?: boolean } = {}): ParseResult {
@@ -83,11 +83,16 @@ export function parseAmount(text: string, currency: string, opts: { allowNegativ
     if (rest.length !== 1) return { ok: false, error: 'invalid' };
     if (commas > 0 && !/^\d{1,3}(,\d{3})+$/.test(intPart)) return { ok: false, error: 'invalid' };
     s = `${intPart.replace(/,/g, '')}.${rest[0]}`;
-  } else if (commas === 1) {
-    s = s.replace(',', '.');
-  } else if (commas > 1) {
-    if (!/^\d{1,3}(,\d{3})+$/.test(s)) return { ok: false, error: 'invalid' };
-    s = s.replace(/,/g, '');
+  } else if (commas > 0) {
+    if (/^\d{1,3}(,\d{3})+$/.test(s)) {
+      // Thousands grouping (Israeli/US convention): "7,000" = 7000.
+      s = s.replace(/,/g, '');
+    } else if (commas === 1 && /^\d*,\d{1,2}$/.test(s)) {
+      // Decimal comma: "12,5" = 12.5.
+      s = s.replace(',', '.');
+    } else {
+      return { ok: false, error: 'invalid' };
+    }
   }
   if (!/^\d+(\.\d*)?$/.test(s) && !/^\.\d+$/.test(s)) return { ok: false, error: 'invalid' };
 

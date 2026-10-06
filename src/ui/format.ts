@@ -45,6 +45,14 @@ export function formatDate(date: string, withYear = true): string {
   return `${p.d} ב${MONTHS[p.m - 1]}${withYear ? ` ${p.y}` : ''}`;
 }
 
+const MONTHS_SHORT = ['ינו׳', 'פבר׳', 'מרץ', 'אפר׳', 'מאי', 'יוני', 'יולי', 'אוג׳', 'ספט׳', 'אוק׳', 'נוב׳', 'דצמ׳'];
+
+/** "6 באוק׳ 2026" — compact, for fields. */
+export function formatDateShort(date: string): string {
+  const p = parts(date);
+  return `${p.d} ב${MONTHS_SHORT[p.m - 1]} ${p.y}`;
+}
+
 /** "יום ג׳, 3 בנובמבר" */
 export function formatDayHeader(date: string): string {
   const p = parts(date);

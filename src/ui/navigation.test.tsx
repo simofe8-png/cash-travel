@@ -1,10 +1,9 @@
-import path from 'node:path';
-
 import { screen } from '@testing-library/react-native';
-import { act, cleanup, fireEvent, renderRouter, waitFor } from 'expo-router/testing-library';
+import { act, cleanup, fireEvent, waitFor } from 'expo-router/testing-library';
 
 import { money } from '../domain/money';
 import { testServices } from '../testing/services';
+import { openApp as open } from '../testing/ui';
 
 let mockServices: ReturnType<typeof testServices>;
 
@@ -14,17 +13,6 @@ jest.mock('../composition/appContainer', () => ({
 
 // The first router render transforms all route modules (cold: several seconds under parallel load).
 jest.setTimeout(30000);
-
-const APP_DIR = path.resolve(__dirname, '../app');
-/**
- * RNTL 14 renders asynchronously: renderRouter returns the render promise with router helpers
- * attached. Await the render but keep the helpers (returning the promise itself would unwrap it).
- */
-async function open(url: string) {
-  const r = renderRouter(APP_DIR, { initialUrl: url });
-  await r;
-  return { getPathname: () => r.getPathname() };
-}
 
 const trip = { name: 'T', startDate: '2026-11-01', endDate: '2026-11-10', reportingCurrency: 'ILS' };
 
