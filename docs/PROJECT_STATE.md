@@ -9,10 +9,10 @@ PASS is an internal quality gate. Claude does not ask the user for permission be
 Implementation in progress.
 
 ## Authoritative next step
-`docs/MASTER_BUILD_PLAN.md` — Step 8: Expense Engine.
+`docs/MASTER_BUILD_PLAN.md` — Step 9: FX Exchange Engine.
 
 ## Last completed build step
-Step 7 — Opening balances & trip lifecycle — PASS.
+Step 8 — Expense Engine — PASS.
 
 ## Exceptional stop conditions
 Stop only when proceeding requires an exceptional gate defined in `CLAUDE.md`: unavailable credentials/secrets/human verification; a new paid action; destructive or irreversible data loss/external action; production/store publication; material scope/security/architecture change outside the approved baseline; or an unresolved blocker after the bounded five-iteration process.
@@ -54,3 +54,8 @@ After every step, update this file with: last PASS step, evidence/commands actua
 ### Step 7 — Opening balances & trip lifecycle — PASS (2026-10-06)
 - Implemented: src/domain/time (local-date/occurrence helpers), src/domain/trip (validation, status, day count/number, elapsed days, default trip choice); ports Clock, UnitOfWork, TripRepository; SqliteTripRepository, SqliteUnitOfWork; TripService (createTrip atomic with openings, updateTripDetails, setOpeningBalances via ledger revisions, list/get/current/select).
 - Evidence: `npm run verify` → 134/134. Trip creation atomic incl. injected mid-write failure; detail edits leave transactions & ledger entries byte-identical; opening balance changes produce EDIT/DELETE/CREATE history; current/upcoming/completed + selection + fallback; device-offset date boundary.
+
+### Step 8 — Expense Engine — PASS (2026-10-06)
+- Implemented: src/domain/expense (built-in keys, custom-category validation, icon set); ports CategoryRepository, CardRepository (no credential fields); SqliteCategoryRepository, SqliteCardRepository (archive-only); ExpenseService (add/edit, reference checks incl. archived category/card rules, per-trip fast-entry defaults); CategoryService (custom create/rename, delete with reassignment to Other or chosen category through Ledger revisions, atomic).
+- Evidence: `npm run verify` → 150/150. Cash expense −wallet; credit expense no cash effect; both isExpense; negative wallet allowed; defaults remembered per trip; reassignment audited (EDIT history), no cash effect, atomic under injected failure.
+- Decision: custom categories are global (shared across trips); a deleted custom category is archived so historical/soft-deleted references stay valid.
