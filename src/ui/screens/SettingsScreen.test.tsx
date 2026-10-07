@@ -3,6 +3,7 @@ import { join } from 'node:path';
 
 import { screen } from '@testing-library/react-native';
 import { act, cleanup, fireEvent, waitFor } from 'expo-router/testing-library';
+import { router } from 'expo-router';
 import { Alert } from 'react-native';
 
 import { money } from '../../domain/money';
@@ -80,6 +81,36 @@ describe('Settings screen', () => {
     await press('settings-edit-trip');
     await waitFor(() => expect(r.getPathname()).toBe('/trip-setup'));
     expect(screen.getByTestId('trip-name').props.value).toBe('Thailand');
+  });
+
+  it('deletes the trip after a destructive confirmation, then switches trip or returns to New Trip', async () => {
+    const rome = mockServices.tripService.createTrip({ name: 'Rome', startDate: '2027-01-01', endDate: '2027-01-05', reportingCurrency: 'EUR' }, []);
+    mockServices.tripService.selectTrip(tripId);
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, message, buttons) => {
+      expect(message).toBe('מחיקת הטיול תמחק את כל הפעולות, היתרות והתמונות השייכות אליו. לא ניתן לבטל פעולה זו.');
+      expect(buttons?.map((b) => b.text)).toEqual(['ביטול', 'מחק את הטיול']);
+      buttons?.find((b) => b.style === 'destructive')?.onPress?.();
+    });
+    const r = await openApp('/settings');
+    await press('settings-delete-trip');
+    await waitFor(() => expect(r.getPathname()).toBe('/'));
+    expect(mockServices.tripService.getTrip(tripId)).toBeUndefined();
+    expect(mockServices.tripService.currentTrip()?.id).toBe(rome);
+
+    await act(async () => router.push('/settings'));
+    await press('settings-delete-trip');
+    await waitFor(() => expect(r.getPathname()).toBe('/trip-setup'));
+    expect(mockServices.tripService.listTrips()).toEqual([]);
+    expect(alert).toHaveBeenCalledTimes(2);
+    alert.mockRestore();
+  });
+
+  it('cancel keeps the trip', async () => {
+    const alert = jest.spyOn(Alert, 'alert').mockImplementation((_t, _m, buttons) => buttons?.find((b) => b.style === 'cancel')?.onPress?.());
+    await openApp('/settings');
+    await press('settings-delete-trip');
+    expect(mockServices.tripService.getTrip(tripId)).toBeDefined();
+    alert.mockRestore();
   });
 
   it('the app has exactly seven screens (no extra top-level screen)', () => {

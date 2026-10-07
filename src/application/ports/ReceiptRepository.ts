@@ -7,6 +7,8 @@ export interface ReceiptRepository {
   /** Removes rows referencing a file name; returns the number removed. */
   removeByFile(fileName: string): number;
   allFileNames(): string[];
+  /** Removes the receipt rows of every transaction of a trip; returns their file names. */
+  removeForTrip(tripId: number): string[];
   /** Receipts whose transaction has been soft-deleted. */
   ofDeletedTransactions(): { transactionId: number; fileName: string }[];
 }

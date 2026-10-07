@@ -48,6 +48,17 @@ export class ReceiptService {
     if (previous && previous !== fileName) this.store.remove(previous);
   }
 
+  /** Deletes photo files whose rows were already removed in a committed transaction (best effort). */
+  deleteFiles(fileNames: readonly string[]): void {
+    for (const f of fileNames) {
+      try {
+        this.store.remove(f);
+      } catch {
+        // Left for `cleanup` (unreferenced files are removed after the grace period).
+      }
+    }
+  }
+
   remove(transactionId: number): void {
     const previous = this.uow.run(() => this.repo.remove(transactionId));
     if (previous) this.store.remove(previous);

@@ -232,6 +232,19 @@ export class SqliteLedgerRepository implements LedgerRepository {
     });
   }
 
+  purgeTrip(tripId: number): void {
+    inTransaction(this.db, () => {
+      const ofTrip = 'SELECT id FROM transactions WHERE trip_id = ?';
+      this.db.run('INSERT INTO trip_purges (trip_id) VALUES (?)', [tripId]);
+      this.db.run(`DELETE FROM transaction_history WHERE transaction_id IN (${ofTrip})`, [tripId]);
+      this.db.run(`DELETE FROM card_charges WHERE transaction_id IN (${ofTrip})`, [tripId]);
+      this.db.run(`DELETE FROM ledger_entries WHERE transaction_id IN (${ofTrip})`, [tripId]);
+      this.db.run('DELETE FROM transactions WHERE trip_id = ?', [tripId]);
+      this.db.run('DELETE FROM cash_wallets WHERE trip_id = ?', [tripId]);
+      this.db.run('DELETE FROM trip_purges WHERE trip_id = ?', [tripId]);
+    });
+  }
+
   setActualCharge(id: number, actualMinor: number | null): void {
     if (actualMinor !== null && (!Number.isSafeInteger(actualMinor) || actualMinor <= 0)) {
       throw new LedgerValidationError(['AMOUNT_NOT_POSITIVE']);

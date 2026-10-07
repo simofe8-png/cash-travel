@@ -9,6 +9,8 @@ export interface FastEntryDefaults {
 export interface TripRepository {
   create(details: TripDetails): number;
   updateDetails(id: number, details: TripDetails): void;
+  /** Deletes the trip row (its financial data must already be purged). */
+  delete(id: number): void;
   get(id: number): Trip | undefined;
   list(): Trip[];
   getSetting(key: string): string | null;

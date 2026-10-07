@@ -40,6 +40,10 @@ export class SqliteTripRepository implements TripRepository {
     ).lastInsertRowId;
   }
 
+  delete(id: number): void {
+    if (this.db.run('DELETE FROM trips WHERE id = ?', [id]).changes !== 1) throw new Error(`Trip ${id} not found`);
+  }
+
   updateDetails(id: number, d: TripDetails): void {
     const changed = this.db.run(
       'UPDATE trips SET name = ?, start_date = ?, end_date = ?, reporting_currency = ?, updated_at = ? WHERE id = ?',

@@ -4,6 +4,7 @@ import { defaultTripId, tripStatus, validateTripDetails, type Trip, type TripDet
 import { isSupportedCurrency, type Money } from '../../domain/money';
 import type { Clock } from '../ports/Clock';
 import type { LedgerRepository } from '../ports/LedgerRepository';
+import type { ReceiptRepository } from '../ports/ReceiptRepository';
 import type { TripRepository } from '../ports/TripRepository';
 import type { UnitOfWork } from '../ports/UnitOfWork';
 
@@ -22,12 +23,40 @@ const CURRENT_TRIP_KEY = 'current_trip_id';
 
 /** Trip lifecycle use-cases. Opening balances are ledger events, never stored balances. */
 export class TripService {
+  private readonly purgeHooks: ((receiptFiles: readonly string[]) => void)[] = [];
+
   constructor(
     private readonly trips: TripRepository,
     private readonly ledger: LedgerRepository,
     private readonly uow: UnitOfWork,
     private readonly clock: Clock,
+    private readonly receipts?: ReceiptRepository,
   ) {}
+
+  /** Runs after a trip deletion committed (e.g. deleting the released receipt photo files). */
+  addPurgeHook(hook: (receiptFiles: readonly string[]) => void): void {
+    this.purgeHooks.push(hook);
+  }
+
+  /**
+   * Permanently deletes a trip with all of its transactions, ledger entries, card charges, history,
+   * wallets and receipts — atomically. Returns the trip that becomes current, or null when none is left.
+   */
+  deleteTrip(id: number): number | null {
+    if (!this.trips.get(id)) throw new Error(`Trip ${id} not found`);
+    const wasCurrent = this.currentTrip()?.id === id;
+    const files = this.uow.run(() => {
+      const released = this.receipts?.removeForTrip(id) ?? [];
+      this.ledger.purgeTrip(id);
+      this.trips.delete(id);
+      if (Number(this.trips.getSetting(CURRENT_TRIP_KEY)) === id) this.trips.setSetting(CURRENT_TRIP_KEY, null);
+      return released;
+    });
+    for (const hook of this.purgeHooks) hook(files);
+    const next = this.currentTrip();
+    if (next && wasCurrent) this.selectTrip(next.id);
+    return next?.id ?? null;
+  }
 
   today(): string {
     return localDateOf(this.clock.now(), this.clock.offsetMinutes());

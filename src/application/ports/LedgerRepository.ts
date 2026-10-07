@@ -16,6 +16,8 @@ export interface LedgerRepository {
   /** Replaces the transaction's financial content; previous entries stay for audit at an older revision. */
   revise(id: number, draft: TransactionDraft, cardCharge?: CardChargeEstimate | null): void;
   softDelete(id: number): void;
+  /** Permanently removes every transaction, ledger entry, card charge, history row and wallet of a trip. */
+  purgeTrip(tripId: number): void;
   /** Records (or clears with null) the actual card charge. Never touches cash. */
   setActualCharge(id: number, actualMinor: number | null): void;
   get(id: number): StoredTransaction | undefined;

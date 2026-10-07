@@ -58,6 +58,7 @@ describe('core schema (migration 0001)', () => {
       'schema_migrations',
       'transaction_history',
       'transactions',
+      'trip_purges',
       'trips',
     ]);
     expect(tables.every((t) => t.strict === 1)).toBe(true);

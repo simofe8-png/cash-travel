@@ -79,6 +79,19 @@ export function SettingsScreen() {
     notifyChanged();
   };
   const editTrip = () => router.push(`/trip-setup?tripId=${trip.id}`);
+  const confirmDeleteTrip = () =>
+    Alert.alert(`מחיקת הטיול "${trip.name}"`, 'מחיקת הטיול תמחק את כל הפעולות, היתרות והתמונות השייכות אליו. לא ניתן לבטל פעולה זו.', [
+      { text: 'ביטול', style: 'cancel' },
+      {
+        text: 'מחק את הטיול',
+        style: 'destructive',
+        onPress: () => {
+          const next = services.tripService.deleteTrip(trip.id);
+          notifyChanged();
+          router.replace(next === null ? '/trip-setup' : '/');
+        },
+      },
+    ]);
 
   return (
     <Screen testID="screen-settings" header={<PhotoHeader compact title={he.tabs.settings} subtitle="ניהול פרטי הטיול והאפליקציה" />}>
@@ -112,6 +125,7 @@ export function SettingsScreen() {
         <AppText variant="caption" color={colors.inkMuted}>
           מטבע הדיווח משפיע רק על התצוגה והסיכומים — לא על הפעולות עצמן.
         </AppText>
+        <Button compact tone="dangerSoft" label="מחיקת הטיול" icon="trash-can-outline" onPress={confirmDeleteTrip} testID="settings-delete-trip" />
       </Card>
 
       <Card>

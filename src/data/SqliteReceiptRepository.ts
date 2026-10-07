@@ -33,6 +33,13 @@ export class SqliteReceiptRepository implements ReceiptRepository {
     return this.db.all<{ file_name: string }>('SELECT file_name FROM receipts').map((r) => r.file_name);
   }
 
+  removeForTrip(tripId: number): string[] {
+    const ofTrip = 'SELECT id FROM transactions WHERE trip_id = ?';
+    const files = this.db.all<{ file_name: string }>(`SELECT file_name FROM receipts WHERE transaction_id IN (${ofTrip})`, [tripId]).map((r) => r.file_name);
+    this.db.run(`DELETE FROM receipts WHERE transaction_id IN (${ofTrip})`, [tripId]);
+    return files;
+  }
+
   ofDeletedTransactions(): { transactionId: number; fileName: string }[] {
     return this.db
       .all<{ transaction_id: number; file_name: string }>(

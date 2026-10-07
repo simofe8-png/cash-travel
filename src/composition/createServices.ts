@@ -55,12 +55,14 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
   const cardCostService = new CardCostService(cards, cardRules, fxRateService, clock);
   cardCostService.installRuleSet(BUNDLED_CARD_RULE_SET);
   const transactionService = new TransactionService(ledger, uow);
-  const receiptService = new ReceiptService(new SqliteReceiptRepository(db), platform.receiptStore, platform.receiptCamera, uow, clock);
+  const receiptRepo = new SqliteReceiptRepository(db);
+  const receiptService = new ReceiptService(receiptRepo, platform.receiptStore, platform.receiptCamera, uow, clock);
   // Deleting an action also deletes its receipt photo (privacy); runs after the delete commits.
   transactionService.addDeleteHook((id) => receiptService.remove(id));
   const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
 
-  const tripService = new TripService(trips, ledger, uow, clock);
+  const tripService = new TripService(trips, ledger, uow, clock, receiptRepo);
+  tripService.addPurgeHook((files) => receiptService.deleteFiles(files));
   const categoryService = new CategoryService(categories, ledger, uow);
   const cardService = new CardService(cards);
   const journalService = new JournalService(new SqliteJournalQueries(db), reportingService);
