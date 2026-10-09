@@ -131,7 +131,8 @@ function ZoomablePages(props: { view: Size; pages: readonly Size[]; uriOf: (i: n
             const uri = i >= range[0] - 1 && i <= range[1] + 1 ? uriOf(i) : undefined;
             return (
               <View key={i} style={[styles.page, { top: tops[i], height: heights[i] }]} testID={`document-page-${i}`}>
-                {uri ? <Image source={{ uri }} style={styles.fill} resizeMode="contain" accessibilityLabel={`עמוד ${i + 1}`} /> : <ActivityIndicator color={colors.inkFaint} />}
+                {/* resizeMethod "scale": decode at full render resolution — the default resizes local files to the layout size, which blurs when zoomed. */}
+                {uri ? <Image source={{ uri }} style={styles.fill} resizeMode="contain" resizeMethod="scale" accessibilityLabel={`עמוד ${i + 1}`} /> : <ActivityIndicator color={colors.inkFaint} />}
               </View>
             );
           })}
