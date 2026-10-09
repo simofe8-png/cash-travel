@@ -3,7 +3,7 @@ import type { TransactionType } from '../../domain/ledger';
 /** Hebrew UI strings (V1 is Hebrew-only, RTL). */
 export const he = {
   appName: 'Cash Travel',
-  tabs: { home: 'בית', journal: 'יומן', add: 'הוספה', summary: 'סיכום', settings: 'הגדרות' },
+  tabs: { home: 'בית', journal: 'יומן', add: 'הוספה', documents: 'מסמכים', summary: 'סיכום', settings: 'הגדרות' },
   common: {
     save: 'שמירה',
     cancel: 'ביטול',

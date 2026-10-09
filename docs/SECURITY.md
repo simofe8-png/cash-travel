@@ -30,6 +30,9 @@ Review against relevant mobile security practices: local data exposure, backup/e
 ## V1 implementation status
 See `docs/security/REVIEW-2026-10-06.md`. Release manifest (Step 32): INTERNET, USE_BIOMETRIC, USE_FINGERPRINT, runtime CAMERA; storage/media/location/audio/overlay/vibrate blocked; `allowBackup=false`; only the launcher activity exported. DB, receipts and report PDFs are app-private; PDFs leave only through the user's share/save choice and are deleted at the next export or app start. No secrets exist in the repository; production signing keys are owner-held and never committed.
 
+## Trip documents (ADR-0013)
+Imported through the system picker (Storage Access Framework, no storage permission) or the camera (runtime permission on use). Files are validated by content and copied to app-private storage; temporary picker/share copies and viewer renders live in the app cache and are removed by the app. The local render module reads/writes only inside the app's files/cache directories. Documents leave the app only through the user's explicit share. No new permission.
+
 ## OTA updates (TEST builds only, ADR-0011)
 TEST builds fetch JS bundles from EAS Update (HTTPS, Expo CDN) on channel `testing`; the Expo account controls what
 TEST devices run. Builds without `CT_UPDATES_CHANNEL=testing` ship with updates disabled. Before any production OTA,

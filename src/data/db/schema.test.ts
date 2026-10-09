@@ -58,13 +58,14 @@ describe('core schema (migration 0001)', () => {
       'schema_migrations',
       'transaction_history',
       'transactions',
+      'trip_documents',
       'trip_purges',
       'trips',
     ]);
     expect(tables.every((t) => t.strict === 1)).toBe(true);
     const indexes = db.all<{ name: string }>("SELECT name FROM sqlite_master WHERE type='index' AND name LIKE 'i%'").map((r) => r.name);
     expect(indexes).toEqual(
-      expect.arrayContaining(['ix_tx_trip_active_time', 'ix_tx_trip_type_date', 'ix_le_wallet', 'ix_le_tx_rev', 'ix_fx_lookup']),
+      expect.arrayContaining(['ix_tx_trip_active_time', 'ix_tx_trip_type_date', 'ix_le_wallet', 'ix_le_tx_rev', 'ix_fx_lookup', 'ix_documents_trip']),
     );
     expect(db.all('PRAGMA foreign_key_check')).toEqual([]);
   });

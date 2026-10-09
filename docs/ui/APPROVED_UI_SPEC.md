@@ -142,6 +142,8 @@ Persistent destinations are exactly:
 
 The central `＋` is the universal event-entry point. Trip Setup and Action Details are contextual and are not persistent bottom-nav destinations.
 
+**Approved extension (2026-10-09, ADR-0013):** `בית | יומן | ＋ | מסמכים | סיכום | הגדרות`. The Documents screen has no reference PNG; it uses this visual system (compact photo header, rounded list card, blue primary action).
+
 ## Implementation verification
 A UI step cannot be marked PASS from tests alone. For each screen milestone:
 1. Inspect the relevant approved PNG before implementation.

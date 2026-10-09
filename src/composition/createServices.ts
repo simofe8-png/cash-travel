@@ -2,12 +2,14 @@ import { AtmService } from '../application/atm/AtmService';
 import { CardCostService } from '../application/cards/CardCostService';
 import { CardService } from '../application/cards/CardService';
 import { ReconciliationService } from '../application/cash/ReconciliationService';
+import { DocumentService } from '../application/documents/DocumentService';
 import { CategoryService } from '../application/expenses/CategoryService';
 import { ExpenseService } from '../application/expenses/ExpenseService';
 import { FxExchangeService } from '../application/fx/FxExchangeService';
 import { FxRateService } from '../application/fx/FxRateService';
 import type { Clock } from '../application/ports/Clock';
 import type { DeviceAuth } from '../application/ports/DeviceAuth';
+import type { DocumentRenderer, DocumentSource, DocumentStore } from '../application/ports/DocumentStore';
 import type { PdfExporter } from '../application/ports/PdfExporter';
 import type { FxRateProvider } from '../application/ports/FxRateProvider';
 import type { ReceiptCamera, ReceiptStore } from '../application/ports/ReceiptStore';
@@ -30,6 +32,7 @@ import { SqliteJournalQueries } from '../data/SqliteJournalQueries';
 import { SqliteLedgerRepository } from '../data/SqliteLedgerRepository';
 import { SqliteReceiptRepository } from '../data/SqliteReceiptRepository';
 import { SqliteReportingQueries } from '../data/SqliteReportingQueries';
+import { SqliteTripDocumentRepository } from '../data/SqliteTripDocumentRepository';
 import { SqliteTripRepository } from '../data/SqliteTripRepository';
 import { SqliteUnitOfWork } from '../data/SqliteUnitOfWork';
 
@@ -40,6 +43,9 @@ export interface PlatformAdapters {
   readonly receiptCamera: ReceiptCamera;
   readonly deviceAuth: DeviceAuth;
   readonly pdfExporter: PdfExporter;
+  readonly documentStore: DocumentStore;
+  readonly documentSource: DocumentSource;
+  readonly documentRenderer: DocumentRenderer;
 }
 
 export function createServices(db: SqlDatabase, clock: Clock, platform: PlatformAdapters) {
@@ -61,8 +67,15 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
   transactionService.addDeleteHook((id) => receiptService.remove(id));
   const reportingService = new ReportingService(trips, ledger, new SqliteReportingQueries(db), fxRateService, cardCostService, clock);
 
-  const tripService = new TripService(trips, ledger, uow, clock, receiptRepo);
-  tripService.addPurgeHook((files) => receiptService.deleteFiles(files));
+  const documentRepo = new SqliteTripDocumentRepository(db);
+  const documentService = new DocumentService(documentRepo, platform.documentStore, platform.documentSource, platform.documentRenderer, uow, clock);
+
+  const tripService = new TripService(trips, ledger, uow, clock, receiptRepo, documentRepo);
+  // Deleting a trip also deletes its receipt photos and document files, after the delete commits.
+  tripService.addPurgeHook((released) => {
+    receiptService.deleteFiles(released.receipts);
+    documentService.deleteFiles(released.documents);
+  });
   const categoryService = new CategoryService(categories, ledger, uow);
   const cardService = new CardService(cards);
   const journalService = new JournalService(new SqliteJournalQueries(db), reportingService);
@@ -90,6 +103,7 @@ export function createServices(db: SqlDatabase, clock: Clock, platform: Platform
     transactionService,
     integrityService: new IntegrityService(new SqliteIntegrityQueries(db), ledger),
     receiptService,
+    documentService,
     appLockService: new AppLockService(trips, platform.deviceAuth),
   };
 }

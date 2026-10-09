@@ -1,6 +1,8 @@
 import type { Clock } from '../application/ports/Clock';
 import { expoDeviceAuth } from '../infrastructure/auth/ExpoDeviceAuth';
+import { ExpoDocumentStore, expoDocumentSource } from '../infrastructure/files/ExpoDocumentStore';
 import { ExpoReceiptStore, expoReceiptCamera } from '../infrastructure/files/ExpoReceiptStore';
+import { nativeDocumentRenderer } from '../infrastructure/files/NativeDocumentRenderer';
 import { expoPdfExporter } from '../infrastructure/pdf/ExpoPdfExporter';
 import { CurrencyApiProvider } from '../infrastructure/fx/CurrencyApiProvider';
 import { FrankfurterProvider } from '../infrastructure/fx/FrankfurterProvider';
@@ -27,10 +29,14 @@ export function getAppServices(): AppServices {
       receiptCamera: expoReceiptCamera,
       deviceAuth: expoDeviceAuth,
       pdfExporter: expoPdfExporter,
+      documentStore: new ExpoDocumentStore(),
+      documentSource: expoDocumentSource,
+      documentRenderer: nativeDocumentRenderer,
     });
     try {
-      // Bounded startup reconciliation of receipt files (never touches financial data).
+      // Bounded startup reconciliation of receipt/document files (never touches financial data).
       instance.receiptService.cleanup();
+      instance.documentService.cleanup();
       expoPdfExporter.cleanup();
     } catch {
       // Non-critical; retried next start.

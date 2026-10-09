@@ -10,6 +10,7 @@ import { MIGRATIONS } from '../data/db/migrations';
 import type { ReferenceRate } from '../domain/fx';
 import { money } from '../domain/money';
 import { occurrenceAtLocal } from '../domain/time';
+import { fakeDocumentAdapters } from '../testing/FakeDocuments';
 import { FakeCamera, FakeDeviceAuth, FakePdfExporter, FakeReceiptStore } from '../testing/FakeReceipts';
 import { FakeClock } from '../testing/fixtures';
 import { NodeSqliteDatabase } from '../testing/NodeSqliteDatabase';
@@ -49,6 +50,7 @@ describe('offline-first and lifecycle', () => {
       receiptCamera: new FakeCamera(),
       deviceAuth: new FakeDeviceAuth(),
       pdfExporter: new FakePdfExporter(),
+      ...fakeDocumentAdapters(),
     });
     return { db, s: services };
   }

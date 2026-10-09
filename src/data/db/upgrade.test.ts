@@ -7,6 +7,7 @@ import { IntegrityService } from '../../application/integrity/IntegrityService';
 import { createServices } from '../../composition/createServices';
 import { money } from '../../domain/money';
 import { occurrenceAtLocal } from '../../domain/time';
+import { fakeDocumentAdapters } from '../../testing/FakeDocuments';
 import { FakeCamera, FakeDeviceAuth, FakePdfExporter, FakeReceiptStore } from '../../testing/FakeReceipts';
 import { FakeClock } from '../../testing/fixtures';
 import { NodeSqliteDatabase } from '../../testing/NodeSqliteDatabase';
@@ -17,7 +18,7 @@ import { currentSchemaVersion, migrate, MigrationError, type Migration } from '.
 import { MIGRATIONS } from './migrations';
 
 const clock = new FakeClock('2026-11-03T05:00:00.000Z', 420);
-const platform = () => ({ fxProviders: [], receiptStore: new FakeReceiptStore(), receiptCamera: new FakeCamera(), deviceAuth: new FakeDeviceAuth(), pdfExporter: new FakePdfExporter() });
+const platform = () => ({ fxProviders: [], receiptStore: new FakeReceiptStore(), receiptCamera: new FakeCamera(), deviceAuth: new FakeDeviceAuth(), pdfExporter: new FakePdfExporter(), ...fakeDocumentAdapters() });
 
 /** Future-style test migrations (never shipped): an added column and a SQLite table rebuild. */
 const addColumn: Migration = { version: MIGRATIONS.length + 1, name: 'test_add_column', up: (db) => db.exec('ALTER TABLE trips ADD COLUMN cover_color TEXT') };

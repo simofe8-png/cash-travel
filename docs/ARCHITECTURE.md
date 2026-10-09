@@ -29,7 +29,7 @@ Domain must not depend on a vendor response schema. FX and card-rule sources use
 All core user actions operate locally. Network is an enhancement for reference rates/rule updates, not a prerequisite for financial entry. Cache externally sourced reference data with provenance/timestamps.
 
 ## Files
-Receipt photos live in app-private storage and are referenced by the DB. PDF export is generated locally and leaves private storage only through explicit Android share/save action.
+Receipt photos and trip documents live in app-private storage and are referenced by the DB (ADR-0008, ADR-0013). PDF export is generated locally and leaves private storage only through explicit Android share/save action.
 
 ## State
 UI state may cache derived data for responsiveness, but caches are rebuildable and never authoritative. Ledger/database remain source of truth.
@@ -40,5 +40,5 @@ RTL is designed from first implementation. Mixed Hebrew/Latin, currency symbols,
 ## V1 implementation map
 - Layers (ADR-0001, lint-enforced): `src/domain` (pure engines: money, ledger rules, FX, ATM, card cost, reporting, trip/time) ← `src/application` (use-case services + ports) ← `src/data` (SQLite repositories, migrations) / `src/infrastructure` (Expo adapters: SQLite, FX HTTP providers, receipt files/camera, device auth, PDF) ← `src/composition` (`createServices`, app container, DB open/upgrade). `src/ui` + `src/app` (Expo Router routes) call application services only.
 - Ledger: `SqliteLedgerRepository` is the sole writer of financial tables (architecture test); balances are derived by SQL from active entries.
-- Schema/migrations: ADR-0003 (incl. pre-upgrade snapshot, table-rebuild support, integrity check). FX: ADR-0004. Card cost: ADR-0005. Reporting: ADR-0006. UI shell/RTL: ADR-0007; visual system: ADR-0010. Receipts: ADR-0008. PDF: ADR-0009.
+- Schema/migrations: ADR-0003 (incl. pre-upgrade snapshot, table-rebuild support, integrity check). FX: ADR-0004. Card cost: ADR-0005. Reporting: ADR-0006. UI shell/RTL: ADR-0007; visual system: ADR-0010. Receipts: ADR-0008. PDF: ADR-0009. Trip documents (incl. the local native module `modules/document-render`): ADR-0013.
 - Network is used only for background reference-rate refresh (`useRateRefresh`), never on a save path.

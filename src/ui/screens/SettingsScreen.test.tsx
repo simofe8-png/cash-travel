@@ -113,10 +113,10 @@ describe('Settings screen', () => {
     alert.mockRestore();
   });
 
-  it('the app has exactly seven screens (no extra top-level screen)', () => {
+  it('the app has exactly the approved screens (seven V1 screens + Documents, ADR-0013)', () => {
     const routes = (dir: string): string[] =>
       readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? routes(join(dir, e.name)).map((r) => `${e.name}/${r}`) : [e.name]));
     const screens = routes(APP_DIR).filter((f) => !f.endsWith('_layout.tsx') && !f.endsWith('plus.tsx'));
-    expect(screens.sort()).toEqual(['(tabs)/index.tsx', '(tabs)/journal.tsx', '(tabs)/settings.tsx', '(tabs)/summary.tsx', 'action/[id].tsx', 'add.tsx', 'trip-setup.tsx']);
+    expect(screens.sort()).toEqual(['(tabs)/documents.tsx', '(tabs)/index.tsx', '(tabs)/journal.tsx', '(tabs)/settings.tsx', '(tabs)/summary.tsx', 'action/[id].tsx', 'add.tsx', 'trip-setup.tsx']);
   });
 });

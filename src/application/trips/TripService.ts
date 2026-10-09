@@ -5,6 +5,7 @@ import { isSupportedCurrency, type Money } from '../../domain/money';
 import type { Clock } from '../ports/Clock';
 import type { LedgerRepository } from '../ports/LedgerRepository';
 import type { ReceiptRepository } from '../ports/ReceiptRepository';
+import type { TripDocumentRepository } from '../ports/TripDocumentRepository';
 import type { TripRepository } from '../ports/TripRepository';
 import type { UnitOfWork } from '../ports/UnitOfWork';
 
@@ -21,9 +22,15 @@ export interface TripSummary extends Trip {
 
 const CURRENT_TRIP_KEY = 'current_trip_id';
 
+/** Private files whose rows a committed trip deletion released. */
+export interface ReleasedTripFiles {
+  readonly receipts: readonly string[];
+  readonly documents: readonly string[];
+}
+
 /** Trip lifecycle use-cases. Opening balances are ledger events, never stored balances. */
 export class TripService {
-  private readonly purgeHooks: ((receiptFiles: readonly string[]) => void)[] = [];
+  private readonly purgeHooks: ((released: ReleasedTripFiles) => void)[] = [];
 
   constructor(
     private readonly trips: TripRepository,
@@ -31,28 +38,30 @@ export class TripService {
     private readonly uow: UnitOfWork,
     private readonly clock: Clock,
     private readonly receipts?: ReceiptRepository,
+    private readonly documents?: TripDocumentRepository,
   ) {}
 
-  /** Runs after a trip deletion committed (e.g. deleting the released receipt photo files). */
-  addPurgeHook(hook: (receiptFiles: readonly string[]) => void): void {
+  /** Runs after a trip deletion committed (deleting the released receipt photo and document files). */
+  addPurgeHook(hook: (released: ReleasedTripFiles) => void): void {
     this.purgeHooks.push(hook);
   }
 
   /**
    * Permanently deletes a trip with all of its transactions, ledger entries, card charges, history,
-   * wallets and receipts — atomically. Returns the trip that becomes current, or null when none is left.
+   * wallets, receipts and documents — atomically. Returns the trip that becomes current, or null when none is left.
    */
   deleteTrip(id: number): number | null {
     if (!this.trips.get(id)) throw new Error(`Trip ${id} not found`);
     const wasCurrent = this.currentTrip()?.id === id;
-    const files = this.uow.run(() => {
-      const released = this.receipts?.removeForTrip(id) ?? [];
+    const released = this.uow.run((): ReleasedTripFiles => {
+      const receipts = this.receipts?.removeForTrip(id) ?? [];
+      const documents = this.documents?.removeForTrip(id) ?? [];
       this.ledger.purgeTrip(id);
       this.trips.delete(id);
       if (Number(this.trips.getSetting(CURRENT_TRIP_KEY)) === id) this.trips.setSetting(CURRENT_TRIP_KEY, null);
-      return released;
+      return { receipts, documents };
     });
-    for (const hook of this.purgeHooks) hook(files);
+    for (const hook of this.purgeHooks) hook(released);
     const next = this.currentTrip();
     if (next && wasCurrent) this.selectTrip(next.id);
     return next?.id ?? null;

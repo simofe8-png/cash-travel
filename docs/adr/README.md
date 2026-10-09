@@ -19,3 +19,6 @@ Expected early ADRs include money/decimal representation, SQLite schema/migratio
 | 0008 | Receipt private-storage lifecycle |
 | 0009 | PDF trip report |
 | 0010 | Approved UI visual system (reconciliation with docs/ui) |
+| 0011 | OTA updates (EAS Update) for TEST builds on the `testing` channel |
+| 0012 | Whole-trip deletion |
+| 0013 | Trip documents: import, private storage, in-app viewer (approved scope extension) |

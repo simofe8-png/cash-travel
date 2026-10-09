@@ -9,14 +9,17 @@ import { colors } from '../../ui/theme/tokens';
 
 const icon = (name: IconName, active: IconName) =>
   function TabIcon({ color, focused }: { color: ColorValue; focused: boolean }) {
-    return <Icon name={focused ? active : name} color={color} size={26} />;
+    return <Icon name={focused ? active : name} color={color} size={24} />;
   };
 
 const label = (text: string) =>
   function TabLabel({ color, focused }: { color: ColorValue; focused: boolean }) {
     return (
       <View style={styles.labelWrap}>
-        <Text style={[styles.label, { color }, focused && styles.labelFocused]}>{text}</Text>
+        {/* Six tabs: one line, scaled down rather than clipped or wrapped at large font sizes. */}
+        <Text style={[styles.label, { color }, focused && styles.labelFocused]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75} maxFontSizeMultiplier={1.4}>
+          {text}
+        </Text>
         <View style={[styles.underline, focused && { backgroundColor: colors.primary }]} />
       </View>
     );
@@ -54,6 +57,7 @@ export default function TabsLayout() {
           ),
         }}
       />
+      <Tabs.Screen name="documents" options={{ title: he.tabs.documents, tabBarIcon: icon('file-document-multiple-outline', 'file-document-multiple'), tabBarLabel: label(he.tabs.documents) }} />
       <Tabs.Screen name="summary" options={{ title: he.tabs.summary, tabBarIcon: icon('chart-bar', 'chart-bar'), tabBarLabel: label(he.tabs.summary) }} />
       <Tabs.Screen name="settings" options={{ title: he.tabs.settings, tabBarIcon: icon('cog-outline', 'cog'), tabBarLabel: label(he.tabs.settings) }} />
     </Tabs>
@@ -62,9 +66,9 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   plusWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  plus: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: -22, elevation: 6, shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
-  labelWrap: { alignItems: 'center', gap: 4 },
-  label: { fontSize: 13, fontWeight: '500' },
+  plus: { width: 56, height: 56, borderRadius: 28, backgroundColor: colors.primary, alignItems: 'center', justifyContent: 'center', marginTop: -22, elevation: 6, shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 } },
+  labelWrap: { alignItems: 'center', gap: 4, alignSelf: 'stretch', paddingHorizontal: 2 },
+  label: { fontSize: 12.5, fontWeight: '500', textAlign: 'center' },
   labelFocused: { fontWeight: '700' },
-  underline: { width: 48, height: 3, borderRadius: 2, backgroundColor: 'transparent' },
+  underline: { width: 36, height: 3, borderRadius: 2, backgroundColor: 'transparent' },
 });

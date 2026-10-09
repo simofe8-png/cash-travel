@@ -40,6 +40,12 @@ export function formatRate(from: string, to: string, rate: Decimal, digits = 4):
   return ltr(`1 ${from} = ${i}${frac ? `.${frac}` : ''} ${to}`);
 }
 
+/** "1.2 MB", "340 KB" (file sizes; presentation only). */
+export function formatFileSize(bytes: number): string {
+  if (bytes >= 1024 * 1024) return ltr(`${(bytes / (1024 * 1024)).toFixed(1).replace(/\.0$/, '')} MB`);
+  return ltr(`${Math.max(1, Math.round(bytes / 1024))} KB`);
+}
+
 const MONTHS = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
 const DAYS = ['ראשון', 'שני', 'שלישי', 'רביעי', 'חמישי', 'שישי', 'שבת'];
 

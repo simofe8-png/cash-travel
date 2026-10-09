@@ -2,7 +2,7 @@
   "expo": {
     "name": "Cash Travel",
     "slug": "cash-travel",
-    "version": "1.0.1",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,7 +22,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.cashtravel.app",
-      "versionCode": 2,
+      "versionCode": 3,
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
         "android.permission.READ_EXTERNAL_STORAGE",
@@ -56,7 +56,7 @@
       [
         "expo-image-picker",
         {
-          "cameraPermission": "המצלמה משמשת רק לצילום קבלות שתבחרו לצרף לפעולה.",
+          "cameraPermission": "המצלמה משמשת רק לצילום קבלות ומסמכים שתבחרו לשמור באפליקציה.",
           "microphonePermission": false
         }
       ],

@@ -19,6 +19,8 @@ Android-first V1. Hebrew RTL. Architecture must not block later iOS support.
 
 Bottom navigation: Home | Journal | + | Summary | Settings. Trip Setup and Action Details are contextual.
 
+**Approved extension (2026-10-09, ADR-0013):** an eighth screen, **Documents** (`מסמכים`), scoped to the current trip. Bottom navigation becomes Home | Journal | + | Documents | Summary | Settings.
+
 ## Fast expense flow
 Normal expense should usually be: amount → category → payment method → save. Date/time default to now. Last-used transaction currency and payment method are remembered per trip. Last-used card may be remembered. Optional place, note and receipt photo live under advanced details.
 
@@ -34,7 +36,7 @@ Category tile → Journal filtered to category → Action Details.
 Newest first, grouped by `occurred_at` day. Daily totals count EXPENSE transactions only. Search textual description/place/note. Filters: category, transaction type, payment method. No separate search screen and no advanced sort system in V1.
 
 ## Receipts and location
-Receipt support is simple photo capture/preview/replace/delete in app-private storage. No OCR, PDF receipt import, document manager, or parsing. Place is optional plain text. No GPS/location permission/maps/tracking.
+Receipt support is simple photo capture/preview/replace/delete in app-private storage. No OCR, PDF receipt import, or parsing. Trip documents are a separate, approved feature (below). Place is optional plain text. No GPS/location permission/maps/tracking.
 
 ## Credit cards
 Minimal setup: issuer/company such as Isracard, MAX, CAL, Other. Ask one additional classification only when materially required for correct rules; allow “unknown”. Never request full card number, CVV, expiry, or last four digits merely for identification.
@@ -59,8 +61,11 @@ Do not block a cash expense that makes a wallet negative. Show the negative bala
 ## Export
 One professional trip-summary PDF. Android share/save UI lets the user choose Drive, Files, WhatsApp, email, etc. No direct Drive integration. No CSV/Excel. PDF is a report, not a restorable database backup. Receipt photos are not embedded by default.
 
+## Trip documents (approved extension, ADR-0013)
+Per-trip documents (tickets, bookings, insurance, passport copies): import PDF/JPG/PNG/HEIC from the phone or capture with the camera; files are copied into app-private storage and listed with type, name, date and actions; full-screen offline viewer with pinch-to-zoom, zoom out and natural scrolling; rename, share via the Android share sheet, delete with confirmation. Deleting a trip deletes its documents. No OCR, parsing, cloud storage or background processing. Documents are not financial records.
+
 ## Explicitly out of V1
-Account/backend/cloud sync; GPS/maps; OCR/document management; budget; generic income; refunds; dedicated split-payment flow; favorite/template/recurring/duplicate actions; direct Drive integration; Excel/CSV export.
+Account/backend/cloud sync; GPS/maps; OCR/document parsing; budget; generic income; refunds; dedicated split-payment flow; favorite/template/recurring/duplicate actions; direct Drive integration; Excel/CSV export.
 
 ## Approved visual specification
 The authoritative visual reference pack is `docs/ui/APPROVED_UI_SPEC.md` plus the PNGs under `docs/ui/references/`. Implement the seven approved screens using that visual language. Current written product/domain rules override obsolete content visible in older mockup pixels.
