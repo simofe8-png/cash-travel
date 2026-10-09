@@ -62,6 +62,12 @@ describe('DocumentService — import', () => {
     expect(s.documentService.get(a, id)).toMatchObject({ displayName: 'מסמך מצולם 03.11.2026', mimeType: 'image/jpeg', originalName: 'camera.jpg' });
   });
 
+  it('a file whose name the picker cannot tell is called "מסמך"', async () => {
+    const { s, a, source } = setup();
+    const id = await s.documentService.importFile(a, source(SAMPLE.pdf), '');
+    expect(s.documentService.get(a, id)).toMatchObject({ displayName: 'מסמך', originalName: 'מסמך.pdf' });
+  });
+
   it('rejects unsupported, empty, oversized files and a full disk — nothing is stored, temp copy removed', async () => {
     const { s, a, source } = setup();
     expect(await codeOf(s.documentService.importFile(a, source(SAMPLE.text), 'notes.pdf'))).toBe('UNSUPPORTED');

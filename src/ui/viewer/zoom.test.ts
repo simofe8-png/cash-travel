@@ -31,9 +31,16 @@ describe('viewer geometry', () => {
     expect(heights).toEqual([400, 400, 100]);
     expect(tops).toEqual([PAGE_GAP, 416, 824]);
     expect(total).toBe(932);
-    expect(visiblePages(tops, heights, 1, 0, 300)).toEqual([0, 0]);
-    expect(visiblePages(tops, heights, 1, -500, 300)).toEqual([1, 1]);
-    expect(visiblePages(tops, heights, 1, -650, 300)).toEqual([1, 2]);
-    expect(visiblePages(tops, heights, 2, -1700, 300)).toEqual([2, 2]);
+    expect(visiblePages(tops, heights, 1, 0, 300)).toEqual([0, 0, 0]);
+    expect(visiblePages(tops, heights, 1, -500, 300)).toEqual([1, 1, 1]);
+    expect(visiblePages(tops, heights, 1, -650, 300)).toEqual([1, 2, 1]);
+    expect(visiblePages(tops, heights, 2, -1700, 300)).toEqual([2, 2, 2]);
+  });
+
+  it('the current page is the one at the viewport center, not the first sliver at the top', () => {
+    const { tops, heights } = layoutPages([{ width: 100, height: 200 }, { width: 100, height: 200 }, { width: 100, height: 200 }], 216);
+    // Viewport 300 high scrolled to y = 400..700: a sliver of page 0 at the top, page 1 fills the rest.
+    expect(visiblePages(tops, heights, 1, -400, 300)).toEqual([0, 1, 1]);
+    expect(visiblePages([], [], 1, 0, 300)).toEqual([-1, -1, -1]);
   });
 });

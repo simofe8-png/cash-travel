@@ -103,7 +103,8 @@ export class DocumentService {
       this.store.discardSource(sourceUri);
       throw new DocumentImportError('COPY_FAILED', e);
     }
-    const original = normalizeDocumentName(originalName) ?? `document.${DOCUMENT_EXTENSION[mime]}`;
+    // A picker that cannot tell the file's name yields "": the document is then simply called "מסמך".
+    const original = normalizeDocumentName(originalName) ?? `מסמך.${DOCUMENT_EXTENSION[mime]}`;
     const name = (displayName !== undefined ? normalizeDocumentName(displayName) : null) ?? displayNameFromFileName(original) ?? original;
     try {
       return this.uow.run(() =>

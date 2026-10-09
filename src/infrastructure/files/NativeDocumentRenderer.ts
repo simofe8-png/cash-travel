@@ -1,17 +1,8 @@
-import { requireOptionalNativeModule } from 'expo';
 import { Directory, File } from 'expo-file-system';
 
 import type { DocumentRenderer, RenderedPage } from '../../application/ports/DocumentStore';
+import { documentRenderModule as native, type DocumentRenderModule } from './documentRenderModule';
 import { renderDir } from './ExpoDocumentStore';
-
-/** Local Android module `modules/document-render` (platform PdfRenderer / ImageDecoder; ADR-0013). */
-interface DocumentRenderModule {
-  pdfPageSizes(fileUri: string): Promise<number[][]>;
-  renderPdfPage(fileUri: string, page: number, widthPx: number, outUri: string): Promise<{ width: number; height: number }>;
-  renderImage(fileUri: string, maxPx: number, outUri: string): Promise<{ width: number; height: number }>;
-}
-
-const native = requireOptionalNativeModule<DocumentRenderModule>('CashTravelDocumentRender');
 
 function outFile(cacheKey: string, name: string): File {
   const dir = new Directory(renderDir(), cacheKey);

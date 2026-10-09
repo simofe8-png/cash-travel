@@ -3,6 +3,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Sharing from 'expo-sharing';
 
 import type { DocumentSource, DocumentStore } from '../../application/ports/DocumentStore';
+import { documentRenderModule } from './documentRenderModule';
 
 const SAFE_NAME = /^d-[a-z0-9-]+\.(pdf|jpg|png|heic)$/;
 /** MIME filter offered to the system picker (the content is verified after import anyway). */
@@ -128,6 +129,20 @@ export class ExpoDocumentStore implements DocumentStore {
   }
 }
 
+/**
+ * The picked file's user-visible name. A SAF `content://` URI ends in an opaque id ("msf:1000051378"),
+ * so the provider's display name is asked for; without it the service falls back to a generic name.
+ */
+function pickedName(picked: File): string {
+  try {
+    const name = documentRenderModule?.contentDisplayName(picked.uri);
+    if (name) return name;
+  } catch {
+    // Fall through to the URI's last segment.
+  }
+  return /^[^.]*:/.test(picked.name) ? '' : picked.name;
+}
+
 /** Not a cancellation: the picker failed (rethrown so the UI reports it). */
 const isCancel = (e: unknown) => /cancel/i.test(String((e as Error)?.message ?? e));
 
@@ -148,7 +163,7 @@ export const expoDocumentSource: DocumentSource = {
     if (!dir.exists) dir.create({ intermediates: true });
     const temp = new File(dir, `i-${random()}`);
     await picked.copy(temp);
-    return { status: 'picked', uri: temp.uri, name: picked.name };
+    return { status: 'picked', uri: temp.uri, name: pickedName(picked) };
   },
   async capturePhoto() {
     const perm = await ImagePicker.requestCameraPermissionsAsync();

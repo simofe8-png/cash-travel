@@ -22,7 +22,7 @@ const imageMaxPx = (view: Size) => Math.min(3072, Math.round(PixelRatio.getPixel
  * Pinch-to-zoom (1×–5×, around the fingers), one-finger pan with momentum, double tap to zoom in/out.
  * At 1× the pages scroll vertically like a normal list. Gestures and transforms run on the UI thread.
  */
-function ZoomablePages(props: { view: Size; pages: readonly Size[]; uriOf: (i: number) => string | undefined; onRange: (first: number, last: number) => void }) {
+function ZoomablePages(props: { view: Size; pages: readonly Size[]; uriOf: (i: number) => string | undefined; onRange: (first: number, last: number, current: number) => void }) {
   const { view, pages, uriOf, onRange } = props;
   const { tops, heights, total } = useMemo(() => layoutPages(pages, view.width), [pages, view.width]);
   const vw = view.width;
@@ -37,9 +37,9 @@ function ZoomablePages(props: { view: Size; pages: readonly Size[]; uriOf: (i: n
 
   const [range, setRange] = useState<[number, number]>([0, 0]);
   const reportRange = useCallback(
-    (first: number, last: number) => {
+    (first: number, last: number, current: number) => {
       setRange([first, last]);
-      onRange(first, last);
+      onRange(first, last, current);
     },
     [onRange],
   );
@@ -116,7 +116,7 @@ function ZoomablePages(props: { view: Size; pages: readonly Size[]; uriOf: (i: n
     () => visiblePages(tops, heights, s.value, ty.value, vh),
     (cur, prev) => {
       // Visible-page tracking drives both rendering and which page images stay mounted (memory bound).
-      if (!prev || cur[0] !== prev[0] || cur[1] !== prev[1]) runOnJS(reportRange)(cur[0], cur[1]);
+      if (!prev || cur[0] !== prev[0] || cur[1] !== prev[1] || cur[2] !== prev[2]) runOnJS(reportRange)(cur[0], cur[1], cur[2]);
     },
     [tops, heights, vh, reportRange],
   );
@@ -152,6 +152,7 @@ export function DocumentViewer({ tripId, doc, onClose, onShare }: { tripId: numb
   const [rendered, setRendered] = useState<Record<number, string>>({});
   const [failedPages, setFailedPages] = useState(0);
   const [range, setRange] = useState<[number, number]>([0, 0]);
+  const [current, setCurrent] = useState(0);
   const inflight = useRef(new Set<number>());
 
   const onLayout = (e: LayoutChangeEvent) => {
@@ -192,7 +193,10 @@ export function DocumentViewer({ tripId, doc, onClose, onShare }: { tripId: numb
 
   const pages: Size[] | null = useMemo(() => (content ? (content.kind === 'pdf' ? content.pages : [content.page]) : null), [content]);
   const uriOf = useCallback((i: number) => (content?.kind === 'image' ? content.page.uri : rendered[i]), [content, rendered]);
-  const onRange = useCallback((first: number, last: number) => setRange([first, last]), []);
+  const onRange = useCallback((first: number, last: number, cur: number) => {
+    setRange([first, last]);
+    setCurrent(cur);
+  }, []);
 
   const message =
     state.status === 'missing'
@@ -232,7 +236,7 @@ export function DocumentViewer({ tripId, doc, onClose, onShare }: { tripId: numb
         </View>
         {content?.kind === 'pdf' && range[0] >= 0 && !message ? (
           <View style={[styles.pager, { bottom: insets.bottom + space.lg }]} pointerEvents="none">
-            <AppText variant="label" color="#fff" testID="document-viewer-page">{`עמוד ${ltr(`${range[0] + 1} / ${content.pages.length}`)}`}</AppText>
+            <AppText variant="label" color="#fff" testID="document-viewer-page">{`עמוד ${ltr(`${Math.max(0, current) + 1} / ${content.pages.length}`)}`}</AppText>
           </View>
         ) : null}
       </GestureHandlerRootView>

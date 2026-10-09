@@ -61,13 +61,18 @@ export function layoutPages(pages: readonly { width: number; height: number }[],
   return { tops, heights, total: y };
 }
 
-/** Indices of the first and last page intersecting the viewport (−1, −1 when there are none). */
-export function visiblePages(tops: readonly number[], heights: readonly number[], scale: number, ty: number, viewH: number): [number, number] {
+/**
+ * First and last page intersecting the viewport, and the current page — the one at the viewport's
+ * vertical center (what the page counter shows). All −1 when there are no pages.
+ */
+export function visiblePages(tops: readonly number[], heights: readonly number[], scale: number, ty: number, viewH: number): [number, number, number] {
   'worklet';
   const top = -ty / scale;
   const bottom = (viewH - ty) / scale;
+  const middle = (top + bottom) / 2;
   let first = -1;
   let last = -1;
+  let current = -1;
   for (let i = 0; i < tops.length; i++) {
     const a = tops[i]!;
     const b = a + heights[i]!;
@@ -75,6 +80,8 @@ export function visiblePages(tops: readonly number[], heights: readonly number[]
       if (first < 0) first = i;
       last = i;
     }
+    // Pages are ordered; the last one starting above the middle contains it (or the gap after it).
+    if (a <= middle) current = i;
   }
-  return [first, last];
+  return [first, last, current < 0 && tops.length > 0 ? 0 : current];
 }

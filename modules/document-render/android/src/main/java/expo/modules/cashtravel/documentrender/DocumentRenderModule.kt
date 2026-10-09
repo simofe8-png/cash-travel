@@ -9,6 +9,7 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.Build
 import android.os.ParcelFileDescriptor
+import android.provider.OpenableColumns
 import expo.modules.kotlin.exception.CodedException
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
@@ -25,6 +26,9 @@ import kotlin.math.min
 class DocumentRenderModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("CashTravelDocumentRender")
+
+    // The user-visible name of a picked file (SAF content:// URIs carry only an opaque id).
+    Function("contentDisplayName") { uri: String -> displayName(Uri.parse(uri)) }
 
     AsyncFunction("pdfPageSizes") { uri: String ->
       withPdf(privateFile(uri)) { pdf ->
@@ -91,6 +95,18 @@ class DocumentRenderModule : Module() {
     val roots = listOf(context.filesDir, context.cacheDir).map { it.canonicalFile.path + File.separator }
     if (roots.none { file.path.startsWith(it) }) throw CodedException("ERR_FILE_SCOPE", "File outside app storage", null)
     return file
+  }
+
+  /** Only the name column is read — never the content. Null when unknown. */
+  private fun displayName(uri: Uri): String? {
+    if (uri.scheme != "content") return null
+    return try {
+      appContext.reactContext?.contentResolver
+        ?.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)
+        ?.use { c -> if (c.moveToFirst() && !c.isNull(0)) c.getString(0) else null }
+    } catch (e: Exception) {
+      null
+    }
   }
 
   private fun <T> withPdf(file: File, block: (PdfRenderer) -> T): T =
